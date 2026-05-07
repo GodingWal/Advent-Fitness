@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import HeaderBar from '../../components/HeaderBar';
 import IconBadge from '../../components/IconBadge';
 import OutlineButton from '../../components/OutlineButton';
 import FriendRequestModal from '../../components/FriendRequestModal';
 import { mockUser } from '../../data/mockUser';
 import { friends, pendingFriendRequests } from '../../data/mockFriends';
-import { colors, spacing, typography } from '../../theme';
+import { colors, spacing, typography, radius, shadows } from '../../theme';
 
 export default function ProfileScreen({ navigation }) {
   const [showRequest, setShowRequest] = useState(false);
@@ -16,9 +17,8 @@ export default function ProfileScreen({ navigation }) {
     <View style={styles.container}>
       <HeaderBar
         onMenu={() => navigation.openDrawer?.()}
-        rightIcon="file-tray-outline"
-        rightBadge={'2'}
-        onRight={() => navigation.navigate('Inbox')}
+        rightIcon="settings-outline"
+        onRight={() => navigation.navigate('Settings')}
       />
       <ScrollView contentContainerStyle={styles.scroll}>
         <ImageBackground source={{ uri: mockUser.cover }} style={styles.cover}>
@@ -72,6 +72,27 @@ export default function ProfileScreen({ navigation }) {
               </View>
             ))}
           </ScrollView>
+
+          <View style={styles.tilesRow}>
+            <TouchableOpacity
+              style={styles.tile}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('Achievements')}
+            >
+              <Ionicons name="trophy-outline" size={24} color={colors.accent} />
+              <Text style={styles.tileLabel}>Achievements</Text>
+              <Text style={styles.tileSub}>4 earned · 7-day streak</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.tile}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('Meetups')}
+            >
+              <Ionicons name="people-outline" size={24} color={colors.accent} />
+              <Text style={styles.tileLabel}>Meetups</Text>
+              <Text style={styles.tileSub}>1 RSVP'd</Text>
+            </TouchableOpacity>
+          </View>
 
           {pending ? (
             <TouchableOpacity
@@ -136,6 +157,17 @@ const styles = StyleSheet.create({
   },
   friendAvatar: { width: '100%', height: '100%', borderRadius: 33 },
   friendName: { ...typography.labelCapsSmall, color: colors.textSecondary, marginTop: 6, textAlign: 'center' },
+  tilesRow: { flexDirection: 'row', marginTop: spacing.l },
+  tile: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.l,
+    padding: spacing.base,
+    marginHorizontal: 4,
+    ...shadows.cardLight,
+  },
+  tileLabel: { ...typography.body, color: colors.textPrimary, fontWeight: '500', marginTop: spacing.s },
+  tileSub: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
   requestBanner: {
     flexDirection: 'row',
     alignItems: 'center',

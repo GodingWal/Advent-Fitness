@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polyline, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HeaderBar from '../../components/HeaderBar';
@@ -8,14 +8,33 @@ import SearchField from '../../components/SearchField';
 import POIFilterChip from '../../components/POIFilterChip';
 import POIMarker from '../../components/POIMarker';
 import POIDetailSheet from '../../components/POIDetailSheet';
+import AddSpotModal from '../../components/AddSpotModal';
 import { POI_CATEGORIES, mockPOIs } from '../../data/mockPOIs';
 import { SAN_DIEGO, getCurrentLocation, haversineMiles } from '../../services/location';
 import { fetchNearbyPOIs, hasPlacesKey } from '../../services/places';
+import { useApp } from '../../state/AppContext';
 import { colors, spacing, radius, typography, shadows } from '../../theme';
+
+const ALL_FILTERS = [
+  { id: 'all', label: 'All', icon: 'apps-outline' },
+  { id: 'saved', label: 'Saved', icon: 'heart-outline' },
+  ...POI_CATEGORIES.filter((c) => c.id !== 'all'),
+];
 
 export default function MapScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const mapRef = useRef();
+  const {
+    savedSpots,
+    submittedSpots,
+    recordedRoutes,
+    settings,
+    toggleSpot,
+    isSpotSaved,
+    submitSpot,
+    updateSetting,
+  } = useApp();
+
   const [region, setRegion] = useState(SAN_DIEGO);
   const [user, setUser] = useState(null);
   const [category, setCategory] = useState('all');
@@ -23,6 +42,7 @@ export default function MapScreen({ navigation }) {
   const [pois, setPois] = useState(mockPOIs);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [addSpot, setAddSpot] = useState({ visible: false, coordinate: null });
 
   useEffect(() => {
     (async () => {
@@ -38,13 +58,19 @@ export default function MapScreen({ navigation }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (category === 'saved') {
+        setPois(savedSpots.map(withDistance(user)));
+        return;
+      }
       if (category === 'all') {
-        setPois(mockPOIs.map(withDistance(user)));
+        setPois([...mockPOIs, ...submittedSpots].map(withDistance(user)));
         return;
       }
       if (!hasPlacesKey()) {
         setPois(
-          mockPOIs.filter((p) => p.category === category).map(withDistance(user))
+          [...mockPOIs, ...submittedSpots]
+            .filter((p) => p.category === category)
+            .map(withDistance(user))
         );
         return;
       }
@@ -55,16 +81,15 @@ export default function MapScreen({ navigation }) {
         longitude: region.longitude,
       });
       if (cancelled) return;
-      const list = (live && live.length ? live : mockPOIs.filter((p) => p.category === category)).map(
-        withDistance(user)
-      );
+      const seed = [...mockPOIs, ...submittedSpots].filter((p) => p.category === category);
+      const list = (live && live.length ? live : seed).map(withDistance(user));
       setPois(list);
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [category, user]);
+  }, [category, user, savedSpots, submittedSpots]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return pois;
@@ -75,6 +100,20 @@ export default function MapScreen({ navigation }) {
     if (user) mapRef.current?.animateToRegion(user, 400);
   };
 
+  const startActivityFromPOI = (p) => {
+    setSelected(null);
+    navigation.navigate('ActivityTracking', {
+      activity: {
+        title: p.name,
+        type: p.category === 'trails' ? 'hiking' : p.category === 'gyms' ? 'weightLifting' : 'running',
+        image: p.photo || 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=1200&q=80',
+      },
+    });
+  };
+
+  const heatmapEnabled = settings.heatmapEnabled;
+  const privacyZone = settings.privacyZone;
+
   return (
     <View style={styles.container}>
       <MapView
@@ -83,6 +122,7 @@ export default function MapScreen({ navigation }) {
         provider={PROVIDER_GOOGLE}
         initialRegion={region}
         onRegionChangeComplete={setRegion}
+        onLongPress={(e) => setAddSpot({ visible: true, coordinate: e.nativeEvent.coordinate })}
         showsUserLocation
         showsMyLocationButton={false}
         showsCompass={false}
@@ -98,14 +138,36 @@ export default function MapScreen({ navigation }) {
             <POIMarker category={p.category} />
           </Marker>
         ))}
+
+        {heatmapEnabled
+          ? recordedRoutes.map((r) => (
+              <Polyline
+                key={r.id}
+                coordinates={r.coordinates}
+                strokeColor={colors.accent}
+                strokeWidth={3}
+                lineCap="round"
+              />
+            ))
+          : null}
+
+        {privacyZone?.enabled ? (
+          <Circle
+            center={privacyZone.center}
+            radius={privacyZone.radiusMi * 1609.34}
+            fillColor="rgba(74,123,183,0.12)"
+            strokeColor="rgba(74,123,183,0.5)"
+            strokeWidth={1}
+          />
+        ) : null}
       </MapView>
 
       <View style={[styles.topOverlay, { paddingTop: insets.top + 6 }]}>
         <HeaderBar
           onMenu={() => navigation.openDrawer?.()}
           title="Explore"
-          rightIcon="locate-outline"
-          onRight={recenter}
+          rightIcon="layers-outline"
+          onRight={() => updateSetting('heatmapEnabled', !heatmapEnabled)}
           background="transparent"
         />
         <View style={styles.searchWrap}>
@@ -121,7 +183,7 @@ export default function MapScreen({ navigation }) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chips}
         >
-          {POI_CATEGORIES.map((c) => (
+          {ALL_FILTERS.map((c) => (
             <POIFilterChip
               key={c.id}
               label={c.label}
@@ -137,6 +199,14 @@ export default function MapScreen({ navigation }) {
             <Text style={styles.loadingText}>Searching nearby…</Text>
           </View>
         ) : null}
+        {heatmapEnabled ? (
+          <View style={styles.heatmapBadge}>
+            <Ionicons name="layers" size={14} color={colors.white} />
+            <Text style={styles.heatmapText}>
+              Heatmap on · {recordedRoutes.length} recorded route{recordedRoutes.length === 1 ? '' : 's'}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       <TouchableOpacity
@@ -147,7 +217,7 @@ export default function MapScreen({ navigation }) {
         <Ionicons name="locate" size={22} color={colors.accent} />
       </TouchableOpacity>
 
-      {!hasPlacesKey() && (
+      {!hasPlacesKey() && category !== 'all' && category !== 'saved' && (
         <View style={[styles.banner, { bottom: insets.bottom + 170 }]}>
           <Text style={styles.bannerText}>
             Showing seed data. Add a Google Places API key to load live POIs.
@@ -158,20 +228,27 @@ export default function MapScreen({ navigation }) {
       {selected ? (
         <POIDetailSheet
           poi={selected}
+          saved={isSpotSaved(selected.id)}
           onClose={() => setSelected(null)}
-          onSave={() => setSelected(null)}
-          onStartActivity={() => {
+          onToggleSave={() => toggleSpot(selected)}
+          onViewDetails={() => {
+            const poi = selected;
             setSelected(null);
-            navigation.navigate('ActivityTracking', {
-              activity: {
-                title: selected.name,
-                type: selected.category === 'trails' ? 'hiking' : 'surfing',
-                image: selected.photo || 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=1200&q=80',
-              },
-            });
+            navigation.navigate('TrailDetail', { poi });
           }}
+          onStartActivity={() => startActivityFromPOI(selected)}
         />
       ) : null}
+
+      <AddSpotModal
+        visible={addSpot.visible}
+        coordinate={addSpot.coordinate}
+        onCancel={() => setAddSpot({ visible: false, coordinate: null })}
+        onSubmit={(spot) => {
+          submitSpot(spot);
+          setAddSpot({ visible: false, coordinate: null });
+        }}
+      />
     </View>
   );
 }
@@ -188,10 +265,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surfaceMuted },
   topOverlay: { position: 'absolute', left: 0, right: 0, top: 0 },
   searchWrap: { paddingHorizontal: spacing.base },
-  chips: {
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.m,
-  },
+  chips: { paddingHorizontal: spacing.base, paddingVertical: spacing.m },
   recenter: {
     position: 'absolute',
     right: spacing.base,
@@ -214,6 +288,17 @@ const styles = StyleSheet.create({
     ...shadows.cardLight,
   },
   loadingText: { ...typography.bodySmall, color: colors.textSecondary, marginLeft: spacing.s },
+  heatmapBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.m,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    marginTop: spacing.xs,
+  },
+  heatmapText: { ...typography.caption, color: colors.white, marginLeft: 4, fontWeight: '500' },
   banner: {
     position: 'absolute',
     left: spacing.base,

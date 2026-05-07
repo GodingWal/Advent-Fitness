@@ -6,6 +6,7 @@ import FeedPost from '../../components/FeedPost';
 import ActiveFriendsRow from '../../components/ActiveFriendsRow';
 import { feedPosts, myPosts } from '../../data/mockFeed';
 import { friends } from '../../data/mockFriends';
+import { useApp } from '../../state/AppContext';
 import { colors, spacing, typography } from '../../theme';
 
 const TABS = [
@@ -15,8 +16,9 @@ const TABS = [
 
 export default function HomeFeedScreen({ navigation }) {
   const [tab, setTab] = useState('friends');
+  const { feedExtras } = useApp();
 
-  const posts = tab === 'friends' ? feedPosts : myPosts;
+  const posts = tab === 'friends' ? feedPosts : [...feedExtras, ...myPosts];
   const sections = posts.reduce((acc, p) => {
     acc[p.section] = acc[p.section] || [];
     acc[p.section].push(p);
