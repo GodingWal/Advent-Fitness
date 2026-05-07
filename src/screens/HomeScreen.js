@@ -1,28 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
+import Constants from 'expo-constants';
 import axios from 'axios';
 
-// Define your API URL here
-const API_URL = 'http://127.0.0.1:8000/';
+const API_URL = Constants.expoConfig?.extra?.apiUrl;
 
 const HomeScreen = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(API_URL);
+        setData(response.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchData();
   }, []);
-
-  const fetchData = async () => {
-    try {
-      const response = await axios.get(API_URL);
-      setData(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setLoading(false);
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -32,7 +31,7 @@ const HomeScreen = () => {
       ) : (
         <FlatList
           data={data}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item, index) => (item?.id != null ? String(item.id) : String(index))}
           renderItem={({ item }) => (
             <View style={styles.itemContainer}>
               <Text>{item.name}</Text>

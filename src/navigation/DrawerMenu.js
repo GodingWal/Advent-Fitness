@@ -1,32 +1,35 @@
-// DrawerMenu.js
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { DrawerContentScrollView } from '@react-navigation/drawer';
 
-const DrawerMenu = ({ navigation }) => {
-  const pages = ['Home', 'Activity', 'Discover', 'Profile'];
+const PAGES = ['Home', 'Activity', 'Discover', 'Profile'];
+const ROOT_SCREEN = 'Advent Fitness';
+
+const DrawerMenu = (props) => {
+  const { navigation } = props;
 
   const navigateToPage = (page) => {
-    navigation.navigate(page);
+    navigation.navigate(ROOT_SCREEN, { screen: page });
+    navigation.closeDrawer();
   };
 
   return (
-    <View style={styles.container}>
-      {pages.map((page, index) => (
+    <DrawerContentScrollView {...props} contentContainerStyle={styles.container}>
+      {PAGES.map((page) => (
         <TouchableOpacity
-          key={index}
+          key={page}
           onPress={() => navigateToPage(page)}
           style={styles.menuItem}
         >
           <Text>{page}</Text>
         </TouchableOpacity>
       ))}
-    </View>
+    </DrawerContentScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 20,
   },
   menuItem: {
