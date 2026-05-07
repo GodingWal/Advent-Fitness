@@ -60,7 +60,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
       <TouchableOpacity
         style={styles.fab}
         activeOpacity={0.85}
-        onPress={() => navigation.navigate('ActivityTracking')}
+        onPress={() => navigation.navigate('ActivityPicker')}
       >
         <IconBadge icon="diamondPlus" size={64} bg={colors.accent} color={colors.white} />
       </TouchableOpacity>

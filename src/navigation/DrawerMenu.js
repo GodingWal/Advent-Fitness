@@ -16,8 +16,10 @@ const ITEMS = [
 
 const STACK_ITEMS = [
   { label: 'Messages', screen: 'Inbox', icon: 'chatbubbles-outline' },
+  { label: 'Group Meetups', screen: 'Meetups', icon: 'people-outline' },
+  { label: 'Achievements', screen: 'Achievements', icon: 'trophy-outline' },
   { label: 'Fitness Center Pass', screen: 'FitnessCenterPass', icon: 'card-outline' },
-  { label: 'Edit Profile', screen: 'EditProfile', icon: 'create-outline' },
+  { label: 'Settings', screen: 'Settings', icon: 'settings-outline' },
 ];
 
 export default function DrawerMenu(props) {
