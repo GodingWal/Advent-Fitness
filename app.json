@@ -9,25 +9,50 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#34495E"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "AdventFitness uses your location to show nearby trails, gyms, and courts on the map.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "AdventFitness uses your location to show nearby trails, gyms, and courts on the map and to record your activity routes."
+      },
+      "config": {
+        "googleMapsApiKey": "REPLACE_WITH_IOS_GOOGLE_MAPS_KEY"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#34495E"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "REPLACE_WITH_ANDROID_GOOGLE_MAPS_KEY"
+        }
       }
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow AdventFitness to use your location."
+        }
+      ]
+    ],
     "extra": {
-      "apiUrl": "http://127.0.0.1:8000/"
+      "apiUrl": "http://127.0.0.1:8000/",
+      "googlePlacesApiKey": ""
     }
   }
 }

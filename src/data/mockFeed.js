@@ -1,0 +1,80 @@
+import { friends } from './mockFriends';
+
+export const feedPosts = [
+  {
+    id: 'p1',
+    user: friends[5],
+    action: 'surfed for',
+    quantity: '1.5 Hours',
+    location: 'Sunset Cliffs',
+    when: 'Today at 5:37 PM',
+    section: 'Earlier Today',
+    photos: [
+      'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=800&q=80',
+      'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=800&q=80',
+    ],
+    likes: 4,
+    likedByMe: false,
+    comments: 1,
+  },
+  {
+    id: 'p2',
+    user: friends[1],
+    action: 'meditated for',
+    quantity: '20 minutes',
+    location: '',
+    when: 'Yesterday at 8:42 AM',
+    section: 'Earlier Today',
+    photos: [],
+    likes: 2,
+    likedByMe: false,
+    comments: 0,
+  },
+  {
+    id: 'p3',
+    user: friends[4],
+    action: 'hiked',
+    quantity: '3.2 miles',
+    location: 'Yosemite Ntl. Park',
+    when: 'Yesterday at 10:34 AM',
+    section: 'Yesterday',
+    photos: [
+      'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80',
+      'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=800&q=80',
+    ],
+    likes: 9,
+    likedByMe: false,
+    comments: 2,
+  },
+  {
+    id: 'p4',
+    user: friends[6],
+    action: 'cycled for',
+    quantity: '2.2 miles',
+    location: 'in Little Italy',
+    when: 'Yesterday at 10:47 AM',
+    section: 'Yesterday',
+    photos: [],
+    likes: 7,
+    likedByMe: true,
+    comments: 0,
+  },
+];
+
+export const myPosts = [
+  {
+    id: 'mp1',
+    user: { id: 'me', shortName: 'You', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80' },
+    action: 'surfed for',
+    quantity: '45 minutes',
+    location: 'Ocean Beach',
+    when: 'Today at 6:15 AM',
+    section: 'Earlier Today',
+    photos: [
+      'https://images.unsplash.com/photo-1505459668311-8dbac7152be1?w=800&q=80',
+    ],
+    likes: 5,
+    likedByMe: false,
+    comments: 1,
+  },
+];
