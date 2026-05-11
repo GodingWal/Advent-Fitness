@@ -6,12 +6,19 @@ import IconBadge from '../../components/IconBadge';
 import OutlineButton from '../../components/OutlineButton';
 import FriendRequestModal from '../../components/FriendRequestModal';
 import { mockUser } from '../../data/mockUser';
-import { friends, pendingFriendRequests } from '../../data/mockFriends';
+import { friends } from '../../data/mockFriends';
+import { useApp } from '../../state/AppContext';
 import { colors, spacing, typography, radius, shadows } from '../../theme';
 
 export default function ProfileScreen({ navigation }) {
+  const { friendRequests, respondToFriendRequest } = useApp();
   const [showRequest, setShowRequest] = useState(false);
-  const pending = pendingFriendRequests[0];
+  const pending = friendRequests[0];
+
+  const handleRespond = () => {
+    if (pending) respondToFriendRequest(pending.id);
+    setShowRequest(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -112,8 +119,8 @@ export default function ProfileScreen({ navigation }) {
       <FriendRequestModal
         visible={showRequest}
         friend={pending?.from}
-        onApprove={() => setShowRequest(false)}
-        onRemove={() => setShowRequest(false)}
+        onApprove={handleRespond}
+        onRemove={handleRespond}
         onClose={() => setShowRequest(false)}
       />
     </View>

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
 import { mockUser } from '../data/mockUser';
+import { pendingFriendRequests as SEED_FRIEND_REQUESTS } from '../data/mockFriends';
 
 const AppContext = createContext(null);
 
@@ -100,6 +101,7 @@ export function AppProvider({ children }) {
   const [recordedRoutes, setRecordedRoutes] = useState(SEED_RECORDED_ROUTES);
   const [achievements] = useState(SEED_ACHIEVEMENTS);
   const [meetups, setMeetups] = useState(SEED_MEETUPS);
+  const [friendRequests, setFriendRequests] = useState(SEED_FRIEND_REQUESTS);
   const [feedExtras, setFeedExtras] = useState([]);
   const [settings, setSettings] = useState({
     pushEnabled: true,
@@ -143,6 +145,10 @@ export function AppProvider({ children }) {
     setFeedExtras((cur) => [post, ...cur]);
   }, []);
 
+  const respondToFriendRequest = useCallback((id) => {
+    setFriendRequests((cur) => cur.filter((r) => r.id !== id));
+  }, []);
+
   const updateSetting = useCallback((key, value) => {
     setSettings((cur) => ({ ...cur, [key]: value }));
   }, []);
@@ -159,6 +165,7 @@ export function AppProvider({ children }) {
       recordedRoutes,
       achievements,
       meetups,
+      friendRequests,
       feedExtras,
       settings,
       toggleSpot,
@@ -167,6 +174,7 @@ export function AppProvider({ children }) {
       addRecordedRoute,
       toggleRsvp,
       addFeedPost,
+      respondToFriendRequest,
       updateSetting,
       updatePrivacyZone,
     }),
@@ -176,6 +184,7 @@ export function AppProvider({ children }) {
       recordedRoutes,
       achievements,
       meetups,
+      friendRequests,
       feedExtras,
       settings,
       toggleSpot,
@@ -184,6 +193,7 @@ export function AppProvider({ children }) {
       addRecordedRoute,
       toggleRsvp,
       addFeedPost,
+      respondToFriendRequest,
       updateSetting,
       updatePrivacyZone,
     ]
