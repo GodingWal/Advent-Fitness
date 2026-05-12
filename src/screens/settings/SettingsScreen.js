@@ -1,12 +1,21 @@
 import React from 'react';
-import { View, Text, ScrollView, Switch, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Switch, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import HeaderBar from '../../components/HeaderBar';
 import { useApp } from '../../state/AppContext';
+import { useAuth } from '../../state/AuthContext';
 import { colors, spacing, radius, typography, shadows } from '../../theme';
 
 export default function SettingsScreen({ navigation }) {
   const { settings, updateSetting, updatePrivacyZone } = useApp();
+  const { signOut } = useAuth();
+
+  const confirmSignOut = () => {
+    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
+    ]);
+  };
 
   return (
     <View style={styles.container}>
@@ -69,6 +78,7 @@ export default function SettingsScreen({ navigation }) {
           title="Group Meetups"
           onPress={() => navigation.navigate('Meetups')}
         />
+        <Row icon="log-out-outline" title="Sign Out" onPress={confirmSignOut} />
       </ScrollView>
     </View>
   );
@@ -89,7 +99,13 @@ function Toggle({ icon, title, sub, value, onChange }) {
 
 function Row({ icon, title, onPress }) {
   return (
-    <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={styles.row}
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+    >
       <Ionicons name={icon} size={22} color={colors.accent} />
       <View style={styles.rowBody}>
         <Text style={styles.rowTitle}>{title}</Text>

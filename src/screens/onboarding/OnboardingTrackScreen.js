@@ -5,10 +5,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import IconBadge from '../../components/IconBadge';
 import PageDots from '../../components/PageDots';
 import PrimaryButton from '../../components/PrimaryButton';
+import { useAuth } from '../../state/AuthContext';
 import { colors, spacing, typography } from '../../theme';
 
 export default function OnboardingTrackScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const { signIn } = useAuth();
+  const skip = () => signIn({ email: 'guest@adventfitness.app' });
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -16,7 +19,7 @@ export default function OnboardingTrackScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="chevron-back" size={28} color={colors.white} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.replace('Main')} hitSlop={12}>
+        <TouchableOpacity onPress={skip} hitSlop={12}>
           <Text style={styles.skip}>SKIP</Text>
         </TouchableOpacity>
       </View>

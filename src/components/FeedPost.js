@@ -1,18 +1,26 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { strings } from '../i18n/strings';
 import { colors, spacing, radius, typography, shadows } from '../theme';
 
-export default function FeedPost({ post }) {
+function FeedPost({ post }) {
   const [liked, setLiked] = useState(post.likedByMe);
+  const toggleLike = useCallback(() => setLiked((v) => !v), []);
 
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
+        <Image
+          source={{ uri: post.user.avatar }}
+          style={styles.avatar}
+          accessibilityIgnoresInvertColors
+        />
         <View style={styles.headerText}>
           <Text style={styles.title}>
-            <Text style={styles.name}>{post.user.shortName || `${post.user.firstName} ${post.user.lastName}`} </Text>
+            <Text style={styles.name}>
+              {post.user.shortName || `${post.user.firstName} ${post.user.lastName}`}{' '}
+            </Text>
             <Text style={styles.action}> {post.action} </Text>
           </Text>
           <Text style={styles.line2}>
@@ -21,7 +29,11 @@ export default function FeedPost({ post }) {
           </Text>
           <Text style={styles.when}>{post.when}</Text>
         </View>
-        <TouchableOpacity hitSlop={12}>
+        <TouchableOpacity
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="More options"
+        >
           <Ionicons name="ellipsis-horizontal" size={20} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
@@ -30,35 +42,50 @@ export default function FeedPost({ post }) {
         <View style={styles.photoRow}>
           {post.photos.slice(0, 2).map((uri, i) => (
             <Image
-              key={i}
+              key={uri}
               source={{ uri }}
               style={[
                 styles.photo,
                 post.photos.length > 1 && i === 0 && { marginRight: 4 },
               ]}
+              accessibilityIgnoresInvertColors
             />
           ))}
         </View>
       ) : null}
 
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.action} onPress={() => setLiked((v) => !v)}>
+        <TouchableOpacity
+          style={styles.action}
+          onPress={toggleLike}
+          accessibilityRole="button"
+          accessibilityState={{ selected: liked }}
+          accessibilityLabel={liked ? strings.feed.liked : strings.feed.like}
+        >
           <Ionicons
             name={liked ? 'heart' : 'heart-outline'}
             size={20}
             color={liked ? colors.accent : colors.textMuted}
           />
           <Text style={[styles.actionText, liked && { color: colors.accent }]}>
-            {liked ? 'LIKED' : 'LIKE'}
+            {liked ? strings.feed.liked : strings.feed.like}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.action}>
+        <TouchableOpacity
+          style={styles.action}
+          accessibilityRole="button"
+          accessibilityLabel={strings.feed.comment}
+        >
           <Ionicons name="chatbubble-outline" size={18} color={colors.textMuted} />
-          <Text style={styles.actionText}>COMMENT</Text>
+          <Text style={styles.actionText}>{strings.feed.comment}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.action}>
+        <TouchableOpacity
+          style={styles.action}
+          accessibilityRole="button"
+          accessibilityLabel={strings.feed.share}
+        >
           <Ionicons name="arrow-redo-outline" size={20} color={colors.textMuted} />
-          <Text style={styles.actionText}>SHARE</Text>
+          <Text style={styles.actionText}>{strings.feed.share}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -106,3 +133,5 @@ const styles = StyleSheet.create({
     marginLeft: spacing.s,
   },
 });
+
+export default React.memo(FeedPost);

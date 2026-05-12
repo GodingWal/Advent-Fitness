@@ -23,6 +23,7 @@ export default function SearchField({
           placeholderTextColor={colors.textSecondary}
           onSubmitEditing={onSubmit}
           returnKeyType="search"
+          accessibilityLabel={placeholder}
         />
       </View>
     );
@@ -38,7 +39,12 @@ export default function SearchField({
         onSubmitEditing={onSubmit}
         returnKeyType="search"
       />
-      <TouchableOpacity style={styles.btn} onPress={onSubmit}>
+      <TouchableOpacity
+        style={styles.btn}
+        onPress={onSubmit}
+        accessibilityRole="button"
+        accessibilityLabel="Search"
+      >
         <Ionicons name="search" size={20} color={colors.white} />
       </TouchableOpacity>
     </View>

@@ -11,9 +11,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#34495E"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -21,7 +19,7 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "AdventFitness uses your location to show nearby trails, gyms, and courts on the map and to record your activity routes."
       },
       "config": {
-        "googleMapsApiKey": "REPLACE_WITH_IOS_GOOGLE_MAPS_KEY"
+        "googleMapsApiKey": "$EXPO_PUBLIC_IOS_GOOGLE_MAPS_KEY"
       }
     },
     "android": {
@@ -29,19 +27,17 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#34495E"
       },
-      "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
-      ],
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
       "config": {
         "googleMaps": {
-          "apiKey": "REPLACE_WITH_ANDROID_GOOGLE_MAPS_KEY"
+          "apiKey": "$EXPO_PUBLIC_ANDROID_GOOGLE_MAPS_KEY"
         }
       }
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "scheme": "adventfitness",
     "plugins": [
       [
         "expo-location",
@@ -51,7 +47,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "http://127.0.0.1:8000/",
+      "apiUrl": "https://api.adventfitness.app/",
       "googlePlacesApiKey": ""
     }
   }

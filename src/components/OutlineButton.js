@@ -7,6 +7,8 @@ export default function OutlineButton({ label, onPress, style, textStyle, color 
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
       style={[styles.btn, { borderColor: color }, style]}
     >
       <Text style={[styles.label, { color: colors.textOnDark }, textStyle]}>{label}</Text>

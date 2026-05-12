@@ -6,10 +6,13 @@ import ActivityCard from '../../components/ActivityCard';
 import PageDots from '../../components/PageDots';
 import PrimaryButton from '../../components/PrimaryButton';
 import { popularActivities } from '../../data/mockActivities';
+import { useAuth } from '../../state/AuthContext';
 import { colors, spacing, typography } from '../../theme';
 
 export default function OnboardingFavoritesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const { signIn } = useAuth();
+  const finish = () => signIn({ email: 'guest@adventfitness.app' });
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -17,7 +20,7 @@ export default function OnboardingFavoritesScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="chevron-back" size={28} color={colors.white} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.replace('Main')} hitSlop={12}>
+        <TouchableOpacity onPress={() => finish()} hitSlop={12}>
           <Text style={styles.skip}>SKIP</Text>
         </TouchableOpacity>
       </View>
@@ -51,7 +54,7 @@ export default function OnboardingFavoritesScreen({ navigation }) {
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.xl }]}>
-        <PrimaryButton label="Next" onPress={() => navigation.replace('Main')} />
+        <PrimaryButton label="Next" onPress={() => finish()} />
       </View>
     </View>
   );
