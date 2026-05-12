@@ -1,5 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+} from 'react-native';
 import MapView, { Marker, Polyline, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +20,7 @@ import { POI_CATEGORIES, mockPOIs } from '../../data/mockPOIs';
 import { SAN_DIEGO, getCurrentLocation, haversineMiles } from '../../services/location';
 import { fetchNearbyPOIs, hasPlacesKey } from '../../services/places';
 import { useApp } from '../../state/AppContext';
+import { strings } from '../../i18n/strings';
 import { colors, spacing, radius, typography, shadows } from '../../theme';
 
 const ALL_FILTERS = [
@@ -20,6 +28,14 @@ const ALL_FILTERS = [
   { id: 'saved', label: 'Saved', icon: 'heart-outline' },
   ...POI_CATEGORIES.filter((c) => c.id !== 'all'),
 ];
+
+function withDistanceFrom(user, list) {
+  if (!user) return list;
+  return list.map((p) => {
+    const d = haversineMiles(user, p.coordinate);
+    return d != null ? { ...p, distanceMi: d } : p;
+  });
+}
 
 export default function MapScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -39,77 +55,88 @@ export default function MapScreen({ navigation }) {
   const [user, setUser] = useState(null);
   const [category, setCategory] = useState('all');
   const [query, setQuery] = useState('');
-  const [pois, setPois] = useState(mockPOIs);
+  const [livePois, setLivePois] = useState(null); // null = use seed
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [addSpot, setAddSpot] = useState({ visible: false, coordinate: null });
 
   useEffect(() => {
-    (async () => {
-      const loc = await getCurrentLocation();
-      if (loc) {
-        setUser(loc);
-        setRegion(loc);
-        mapRef.current?.animateToRegion(loc, 600);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (category === 'saved') {
-        setPois(savedSpots.map(withDistance(user)));
-        return;
-      }
-      if (category === 'all') {
-        setPois([...mockPOIs, ...submittedSpots].map(withDistance(user)));
-        return;
-      }
-      if (!hasPlacesKey()) {
-        setPois(
-          [...mockPOIs, ...submittedSpots]
-            .filter((p) => p.category === category)
-            .map(withDistance(user))
-        );
-        return;
-      }
+      const loc = await getCurrentLocation();
+      if (cancelled || !loc) return;
+      setUser(loc);
+      setRegion(loc);
+      mapRef.current?.animateToRegion(loc, 600);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Reset live data when category changes; fetch when applicable.
+  useEffect(() => {
+    let cancelled = false;
+    setLivePois(null);
+    if (category === 'all' || category === 'saved' || !hasPlacesKey()) return;
+    (async () => {
       setLoading(true);
       const live = await fetchNearbyPOIs({
         category,
         latitude: region.latitude,
         longitude: region.longitude,
       });
-      if (cancelled) return;
-      const seed = [...mockPOIs, ...submittedSpots].filter((p) => p.category === category);
-      const list = (live && live.length ? live : seed).map(withDistance(user));
-      setPois(list);
-      setLoading(false);
+      if (!cancelled) {
+        setLivePois(live && live.length ? live : null);
+        setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [category, user, savedSpots, submittedSpots]);
+    // region intentionally omitted: refetching on every pan would be wasteful and noisy.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category]);
+
+  // Recompute the working POI list cheaply when its real inputs change.
+  const pois = useMemo(() => {
+    if (category === 'saved') return withDistanceFrom(user, savedSpots);
+    if (category === 'all') return withDistanceFrom(user, [...mockPOIs, ...submittedSpots]);
+    if (livePois) return withDistanceFrom(user, livePois);
+    const seed = [...mockPOIs, ...submittedSpots].filter((p) => p.category === category);
+    return withDistanceFrom(user, seed);
+  }, [category, user, savedSpots, submittedSpots, livePois]);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return pois;
-    return pois.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
+    const q = query.trim().toLowerCase();
+    if (!q) return pois;
+    return pois.filter((p) => p.name.toLowerCase().includes(q));
   }, [query, pois]);
 
-  const recenter = () => {
+  const recenter = useCallback(() => {
     if (user) mapRef.current?.animateToRegion(user, 400);
-  };
+  }, [user]);
 
-  const startActivityFromPOI = (p) => {
-    setSelected(null);
-    navigation.navigate('ActivityTracking', {
-      activity: {
-        title: p.name,
-        type: p.category === 'trails' ? 'hiking' : p.category === 'gyms' ? 'weightLifting' : 'running',
-        image: p.photo || 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=1200&q=80',
-      },
-    });
-  };
+  const startActivityFromPOI = useCallback(
+    (p) => {
+      setSelected(null);
+      navigation.navigate('ActivityTracking', {
+        activity: {
+          title: p.name,
+          type:
+            p.category === 'trails'
+              ? 'hiking'
+              : p.category === 'gyms'
+              ? 'weightLifting'
+              : 'running',
+          image:
+            p.photo ||
+            'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=1200&q=80',
+        },
+      });
+    },
+    [navigation]
+  );
 
   const heatmapEnabled = settings.heatmapEnabled;
   const privacyZone = settings.privacyZone;
@@ -165,7 +192,7 @@ export default function MapScreen({ navigation }) {
       <View style={[styles.topOverlay, { paddingTop: insets.top + 6 }]}>
         <HeaderBar
           onMenu={() => navigation.openDrawer?.()}
-          title="Explore"
+          title={strings.map.title}
           rightIcon="layers-outline"
           onRight={() => updateSetting('heatmapEnabled', !heatmapEnabled)}
           background="transparent"
@@ -175,7 +202,7 @@ export default function MapScreen({ navigation }) {
             variant="plain"
             value={query}
             onChangeText={setQuery}
-            placeholder="Search trails, gyms, courts..."
+            placeholder={strings.map.searchPlaceholder}
           />
         </View>
         <ScrollView
@@ -194,17 +221,15 @@ export default function MapScreen({ navigation }) {
           ))}
         </ScrollView>
         {loading ? (
-          <View style={styles.loading}>
+          <View style={styles.loading} accessibilityLiveRegion="polite">
             <ActivityIndicator color={colors.accent} />
-            <Text style={styles.loadingText}>Searching nearby…</Text>
+            <Text style={styles.loadingText}>{strings.map.searchingNearby}</Text>
           </View>
         ) : null}
         {heatmapEnabled ? (
           <View style={styles.heatmapBadge}>
             <Ionicons name="layers" size={14} color={colors.white} />
-            <Text style={styles.heatmapText}>
-              Heatmap on · {recordedRoutes.length} recorded route{recordedRoutes.length === 1 ? '' : 's'}
-            </Text>
+            <Text style={styles.heatmapText}>{strings.map.heatmapBadge(recordedRoutes.length)}</Text>
           </View>
         ) : null}
       </View>
@@ -213,15 +238,15 @@ export default function MapScreen({ navigation }) {
         style={[styles.recenter, { bottom: insets.bottom + 110 }]}
         onPress={recenter}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Recenter map on my location"
       >
         <Ionicons name="locate" size={22} color={colors.accent} />
       </TouchableOpacity>
 
       {!hasPlacesKey() && category !== 'all' && category !== 'saved' && (
         <View style={[styles.banner, { bottom: insets.bottom + 170 }]}>
-          <Text style={styles.bannerText}>
-            Showing seed data. Add a Google Places API key to load live POIs.
-          </Text>
+          <Text style={styles.bannerText}>{strings.map.seedDataNotice}</Text>
         </View>
       )}
 
@@ -251,14 +276,6 @@ export default function MapScreen({ navigation }) {
       />
     </View>
   );
-}
-
-function withDistance(user) {
-  return (p) => {
-    if (!user) return p;
-    const d = haversineMiles(user, p.coordinate);
-    return d != null ? { ...p, distanceMi: d } : p;
-  };
 }
 
 const styles = StyleSheet.create({

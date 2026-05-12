@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SplashScreen from '../screens/splash/SplashScreen';
 import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
@@ -22,10 +23,12 @@ import MeetupsScreen from '../screens/meetups/MeetupsScreen';
 import MeetupDetailScreen from '../screens/meetups/MeetupDetailScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import MainDrawer from './MainDrawer';
+import { useAuth } from '../state/AuthContext';
+import { colors } from '../theme';
 
 const Stack = createNativeStackNavigator();
 
-export default function RootNavigator() {
+function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Splash">
       <Stack.Screen name="Splash" component={SplashScreen} />
@@ -35,6 +38,13 @@ export default function RootNavigator() {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="OnboardingTrack" component={OnboardingTrackScreen} />
       <Stack.Screen name="OnboardingFavorites" component={OnboardingFavoritesScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function AppStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Main">
       <Stack.Screen name="Main" component={MainDrawer} />
 
       <Stack.Screen
@@ -63,3 +73,21 @@ export default function RootNavigator() {
     </Stack.Navigator>
   );
 }
+
+export default function RootNavigator() {
+  const { isAuthenticated, hydrating } = useAuth();
+
+  if (hydrating) {
+    return (
+      <View style={styles.splash}>
+        <ActivityIndicator color={colors.accent} size="large" />
+      </View>
+    );
+  }
+
+  return isAuthenticated ? <AppStack /> : <AuthStack />;
+}
+
+const styles = StyleSheet.create({
+  splash: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bgDark },
+});

@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { logger } from '../services/logger';
+import { strings } from '../i18n/strings';
 import { colors, spacing, radius, typography, shadows } from '../theme';
 
 const WEATHER_BY_CATEGORY = {
@@ -15,38 +17,58 @@ const WEATHER_BY_CATEGORY = {
   surfing: { icon: 'water-outline', text: 'Surf 3-4 ft · Tide rising' },
 };
 
-export default function POIDetailSheet({
-  poi,
-  saved,
-  onClose,
-  onStartActivity,
-  onToggleSave,
-  onViewDetails,
-}) {
-  if (!poi) return null;
-
-  const openDirections = () => {
+function POIDetailSheet({ poi, saved, onClose, onStartActivity, onToggleSave, onViewDetails }) {
+  const openDirections = useCallback(() => {
+    if (!poi?.coordinate) return;
     const { latitude, longitude } = poi.coordinate;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
-    Linking.openURL(url);
-  };
+    Linking.openURL(url).catch((e) =>
+      logger.warn('Failed to open directions', { message: e?.message })
+    );
+  }, [poi]);
+
+  if (!poi) return null;
 
   const weather = WEATHER_BY_CATEGORY[poi.category];
 
   return (
-    <View style={styles.sheet}>
+    <View
+      style={styles.sheet}
+      accessibilityViewIsModal
+      accessibilityRole="summary"
+      accessibilityLabel={`Details for ${poi.name}`}
+    >
       <View style={styles.handle} />
-      <TouchableOpacity style={styles.close} onPress={onClose} hitSlop={12}>
+      <TouchableOpacity
+        style={styles.close}
+        onPress={onClose}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel="Close details"
+      >
         <Ionicons name="close" size={22} color={colors.textPrimary} />
       </TouchableOpacity>
-      {poi.photo ? <Image source={{ uri: poi.photo }} style={styles.photo} /> : null}
+      {poi.photo ? (
+        <Image
+          source={{ uri: poi.photo }}
+          style={styles.photo}
+          accessibilityIgnoresInvertColors
+        />
+      ) : null}
       <View style={styles.body}>
         <View style={styles.titleRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>{poi.name}</Text>
             <Text style={styles.address}>{poi.address}</Text>
           </View>
-          <TouchableOpacity onPress={onToggleSave} hitSlop={12} style={styles.saveBtn}>
+          <TouchableOpacity
+            onPress={onToggleSave}
+            hitSlop={12}
+            style={styles.saveBtn}
+            accessibilityRole="button"
+            accessibilityState={{ selected: !!saved }}
+            accessibilityLabel={saved ? 'Remove from saved' : 'Save spot'}
+          >
             <Ionicons
               name={saved ? 'heart' : 'heart-outline'}
               size={26}
@@ -75,13 +97,17 @@ export default function POIDetailSheet({
                 size={14}
                 color={poi.open ? '#2ECC71' : colors.like}
               />
-              <Text style={styles.metaText}>{poi.open ? 'Open now' : 'Closed'}</Text>
+              <Text style={styles.metaText}>
+                {poi.open ? strings.poi.openNow : strings.poi.closed}
+              </Text>
             </View>
           ) : null}
           {poi.userSubmitted ? (
             <View style={styles.metaItem}>
               <Ionicons name="person-add-outline" size={14} color={colors.accent} />
-              <Text style={[styles.metaText, { color: colors.accent }]}>Community</Text>
+              <Text style={[styles.metaText, { color: colors.accent }]}>
+                {strings.poi.community}
+              </Text>
             </View>
           ) : null}
         </View>
@@ -94,17 +120,32 @@ export default function POIDetailSheet({
         ) : null}
 
         <View style={styles.actions}>
-          <TouchableOpacity style={[styles.actionBtn, styles.primaryBtn]} onPress={openDirections}>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.primaryBtn]}
+            onPress={openDirections}
+            accessibilityRole="button"
+            accessibilityLabel={strings.poi.directions}
+          >
             <Ionicons name="navigate-outline" size={18} color={colors.white} />
-            <Text style={styles.primaryLabel}>Directions</Text>
+            <Text style={styles.primaryLabel}>{strings.poi.directions}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={onViewDetails}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={onViewDetails}
+            accessibilityRole="button"
+            accessibilityLabel={strings.poi.details}
+          >
             <Ionicons name="information-circle-outline" size={20} color={colors.accent} />
-            <Text style={styles.label}>Details</Text>
+            <Text style={styles.label}>{strings.poi.details}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={onStartActivity}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={onStartActivity}
+            accessibilityRole="button"
+            accessibilityLabel={`${strings.poi.start} activity at ${poi.name}`}
+          >
             <Ionicons name="play-circle-outline" size={20} color={colors.accent} />
-            <Text style={styles.label}>Start</Text>
+            <Text style={styles.label}>{strings.poi.start}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -168,3 +209,5 @@ const styles = StyleSheet.create({
   label: { ...typography.labelCapsSmall, color: colors.accent, marginLeft: 6 },
   primaryLabel: { ...typography.labelCapsSmall, color: colors.white, marginLeft: 6 },
 });
+
+export default React.memo(POIDetailSheet);

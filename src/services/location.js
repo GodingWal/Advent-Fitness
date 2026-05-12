@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import { logger } from './logger';
 
 export const SAN_DIEGO = {
   latitude: 32.7157,
@@ -24,7 +25,7 @@ export async function getCurrentLocation() {
       longitudeDelta: 0.05,
     };
   } catch (e) {
-    console.warn('Location error', e);
+    logger.warn('getCurrentLocation failed', { message: e?.message });
     return null;
   }
 }
@@ -52,7 +53,7 @@ export async function watchLocation(callback) {
     );
     return sub;
   } catch (e) {
-    console.warn('Watch error', e);
+    logger.warn('watchLocation failed', { message: e?.message });
     return null;
   }
 }
@@ -66,8 +67,7 @@ export function haversineMiles(a, b) {
   const lat1 = toRad(a.latitude);
   const lat2 = toRad(b.latitude);
   const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.sin(dLon / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+    Math.sin(dLat / 2) ** 2 + Math.sin(dLon / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
   return R * 2 * Math.asin(Math.sqrt(h));
 }
 
@@ -84,6 +84,8 @@ export function applyPrivacyZone(coords, zone) {
   if (!zone?.enabled || !coords?.length) return coords;
   return coords.filter((c) => {
     const d = haversineMiles(c, zone.center);
-    return d == null || d > zone.radiusMi;
+    // If distance can't be computed (missing point), keep — never strip silently.
+    if (d === null) return true;
+    return d > zone.radiusMi;
   });
 }

@@ -3,18 +3,22 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, typography } from '../theme';
 
-export default function TimerRing({ size = 260, stroke = 4, progress = 0.7, time = '0:00', label = 'MINUTES' }) {
-  const radius = (size - stroke) / 2;
-  const circ = 2 * Math.PI * radius;
+function TimerRing({ size = 260, stroke = 4, progress = 0.7, time = '0:00', label = 'MINUTES' }) {
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
   const dashOffset = circ * (1 - Math.max(0, Math.min(1, progress)));
 
   return (
-    <View style={[styles.wrap, { width: size, height: size }]}>
+    <View
+      style={[styles.wrap, { width: size, height: size }]}
+      accessibilityRole="timer"
+      accessibilityLabel={`${time} ${label.toLowerCase()}`}
+    >
       <Svg width={size} height={size}>
         <Circle
           cx={size / 2}
           cy={size / 2}
-          r={radius}
+          r={r}
           stroke="rgba(255,255,255,0.18)"
           strokeWidth={stroke}
           fill="rgba(255,255,255,0.12)"
@@ -22,7 +26,7 @@ export default function TimerRing({ size = 260, stroke = 4, progress = 0.7, time
         <Circle
           cx={size / 2}
           cy={size / 2}
-          r={radius}
+          r={r}
           stroke={colors.accent}
           strokeWidth={stroke}
           fill="transparent"
@@ -48,3 +52,5 @@ const styles = StyleSheet.create({
   divider: { width: 24, height: 1, backgroundColor: colors.white, marginVertical: 6, opacity: 0.7 },
   label: { ...typography.labelCapsSmall, color: colors.white, opacity: 0.85 },
 });
+
+export default React.memo(TimerRing);

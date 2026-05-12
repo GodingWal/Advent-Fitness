@@ -16,6 +16,9 @@ export default function PrimaryButton({
       activeOpacity={0.85}
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled }}
       style={[styles.btn, disabled && styles.disabled, style]}
     >
       <View style={styles.row}>

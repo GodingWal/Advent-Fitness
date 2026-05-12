@@ -27,21 +27,44 @@ export default function HeaderBar({
     >
       <View style={styles.left}>
         {onBack ? (
-          <TouchableOpacity hitSlop={12} onPress={onBack}>
+          <TouchableOpacity
+            hitSlop={12}
+            onPress={onBack}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
             <Ionicons name="chevron-back" size={28} color={iconColor} />
           </TouchableOpacity>
         ) : onMenu ? (
-          <TouchableOpacity hitSlop={12} onPress={onMenu}>
+          <TouchableOpacity
+            hitSlop={12}
+            onPress={onMenu}
+            accessibilityRole="button"
+            accessibilityLabel="Open navigation menu"
+          >
             <Ionicons name="menu" size={26} color={iconColor} />
           </TouchableOpacity>
         ) : null}
       </View>
       <View style={styles.center}>
-        {title ? <Text style={[styles.title, { color: titleColor }]}>{title}</Text> : null}
+        {title ? (
+          <Text
+            style={[styles.title, { color: titleColor }]}
+            accessibilityRole="header"
+          >
+            {title}
+          </Text>
+        ) : null}
       </View>
       <View style={styles.right}>
         {rightIcon ? (
-          <TouchableOpacity hitSlop={12} onPress={onRight} style={styles.rightBtn}>
+          <TouchableOpacity
+            hitSlop={12}
+            onPress={onRight}
+            style={styles.rightBtn}
+            accessibilityRole="button"
+            accessibilityLabel={`${rightIcon} action`}
+          >
             <Ionicons name={rightIcon} size={26} color={iconColor} />
             {rightBadge ? (
               <View style={styles.badge}>

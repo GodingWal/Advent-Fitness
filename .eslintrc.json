@@ -1,0 +1,39 @@
+{
+  "root": true,
+  "parser": "@babel/eslint-parser",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "ecmaFeatures": { "jsx": true },
+    "requireConfigFile": false,
+    "babelOptions": { "presets": ["babel-preset-expo"] }
+  },
+  "env": {
+    "es2022": true,
+    "node": true,
+    "jest": true,
+    "browser": true
+  },
+  "plugins": ["react", "react-hooks", "react-native"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:react-native/all",
+    "prettier"
+  ],
+  "settings": {
+    "react": { "version": "detect" }
+  },
+  "rules": {
+    "react/prop-types": "off",
+    "react/react-in-jsx-scope": "off",
+    "react-native/no-inline-styles": "off",
+    "react-native/no-color-literals": "off",
+    "react-native/sort-styles": "off",
+    "react-native/no-raw-text": "off",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "eqeqeq": ["error", "always", { "null": "ignore" }]
+  },
+  "ignorePatterns": ["node_modules/", "babel.config.js", ".expo/", "dist/", "web-build/"]
+}

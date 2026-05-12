@@ -13,9 +13,9 @@ const SEED_RECORDED_ROUTES = [
     when: 'Yesterday',
     coordinates: [
       { latitude: 32.9213, longitude: -117.2546 },
-      { latitude: 32.9230, longitude: -117.2520 },
+      { latitude: 32.923, longitude: -117.252 },
       { latitude: 32.9255, longitude: -117.2502 },
-      { latitude: 32.9270, longitude: -117.2520 },
+      { latitude: 32.927, longitude: -117.252 },
       { latitude: 32.9252, longitude: -117.2548 },
       { latitude: 32.9213, longitude: -117.2546 },
     ],
@@ -29,9 +29,9 @@ const SEED_RECORDED_ROUTES = [
     when: '2 days ago',
     coordinates: [
       { latitude: 32.6859, longitude: -117.1831 },
-      { latitude: 32.6890, longitude: -117.1750 },
-      { latitude: 32.6910, longitude: -117.1700 },
-      { latitude: 32.6940, longitude: -117.1660 },
+      { latitude: 32.689, longitude: -117.175 },
+      { latitude: 32.691, longitude: -117.17 },
+      { latitude: 32.694, longitude: -117.166 },
     ],
   },
 ];
@@ -90,7 +90,7 @@ const SEED_MEETUPS = [
 
 const SEED_PRIVACY_ZONE = {
   enabled: true,
-  center: { latitude: 32.7480, longitude: -117.1492 },
+  center: { latitude: 32.748, longitude: -117.1492 },
   radiusMi: 0.15,
 };
 
@@ -109,17 +109,13 @@ export function AppProvider({ children }) {
     heatmapEnabled: false,
   });
 
+  // Stable callbacks — empty dep arrays because they only use setState updaters.
   const toggleSpot = useCallback((spot) => {
     setSavedSpots((cur) => {
       const exists = cur.find((s) => s.id === spot.id);
       return exists ? cur.filter((s) => s.id !== spot.id) : [...cur, spot];
     });
   }, []);
-
-  const isSpotSaved = useCallback(
-    (id) => savedSpots.some((s) => s.id === id),
-    [savedSpots]
-  );
 
   const submitSpot = useCallback((spot) => {
     setSubmittedSpots((cur) => [...cur, spot]);
@@ -151,6 +147,9 @@ export function AppProvider({ children }) {
     setSettings((cur) => ({ ...cur, privacyZone: { ...cur.privacyZone, ...next } }));
   }, []);
 
+  // isSpotSaved depends on savedSpots — keep memoized but only on that.
+  const isSpotSaved = useCallback((id) => savedSpots.some((s) => s.id === id), [savedSpots]);
+
   const value = useMemo(
     () => ({
       user: mockUser,
@@ -178,8 +177,8 @@ export function AppProvider({ children }) {
       meetups,
       feedExtras,
       settings,
-      toggleSpot,
       isSpotSaved,
+      toggleSpot,
       submitSpot,
       addRecordedRoute,
       toggleRsvp,
@@ -196,4 +195,23 @@ export function useApp() {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useApp must be used inside AppProvider');
   return ctx;
+}
+
+// Selector-style hooks let consumers subscribe to the slice they care about.
+// They still re-render on any context change today (React context limitation),
+// but reading through these hooks documents the intended dependency surface.
+export function useSavedSpots() {
+  return useApp().savedSpots;
+}
+
+export function useRecordedRoutes() {
+  return useApp().recordedRoutes;
+}
+
+export function useMeetups() {
+  return useApp().meetups;
+}
+
+export function useSettings() {
+  return useApp().settings;
 }
