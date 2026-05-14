@@ -64,15 +64,17 @@ export const feedPosts = [
 export const myPosts = [
   {
     id: 'mp1',
-    user: { id: 'me', shortName: 'You', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80' },
+    user: {
+      id: 'me',
+      shortName: 'You',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80',
+    },
     action: 'surfed for',
     quantity: '45 minutes',
     location: 'Ocean Beach',
     when: 'Today at 6:15 AM',
     section: 'Earlier Today',
-    photos: [
-      'https://images.unsplash.com/photo-1505459668311-8dbac7152be1?w=800&q=80',
-    ],
+    photos: ['https://images.unsplash.com/photo-1505459668311-8dbac7152be1?w=800&q=80'],
     likes: 5,
     likedByMe: false,
     comments: 1,

@@ -57,9 +57,7 @@ export async function fetchNearbyPOIs({ category, latitude, longitude, radius = 
   if (params.keyword) query.append('keyword', params.keyword);
 
   try {
-    const { data } = await getWithRetry(
-      `${PLACES_BASE}/nearbysearch/json?${query.toString()}`
-    );
+    const { data } = await getWithRetry(`${PLACES_BASE}/nearbysearch/json?${query.toString()}`);
     if (data.status && data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
       logger.warn('Places API non-OK status', { status: data.status, message: data.error_message });
       return null;

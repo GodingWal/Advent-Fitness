@@ -1,29 +1,33 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ImageBackground,
-  StatusBar,
-} from 'react-native';
+import { View, Text, StyleSheet, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { BlurView } from 'expo-blur';
 import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import HeaderBar from '../../components/HeaderBar';
 import IconBadge from '../../components/IconBadge';
-import TimerRing from '../../components/TimerRing';
+import PrimaryButton from '../../components/PrimaryButton';
+import OutlineButton from '../../components/OutlineButton';
+import { Caps, Mono } from '../../components/VoltPrimitives';
 import { watchLocation, pathDistanceMiles } from '../../services/location';
-import { strings } from '../../i18n/strings';
-import { colors, spacing, radius, typography, shadows } from '../../theme';
+import { colors, spacing, radius, typography } from '../../theme';
 
 function formatTime(totalSeconds) {
-  const m = Math.floor(totalSeconds / 60);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 const INDOOR_TYPES = ['weightLifting', 'meditation', 'yoga'];
+const ACTIVITY_ICONS = {
+  surfing: 'wave',
+  hiking: 'mountain',
+  running: 'run',
+  cycling: 'bike',
+  weightLifting: 'weight',
+  yoga: 'yoga',
+  meditation: 'meditate',
+};
 
 const initialState = { seconds: 0, running: true, path: [], showMap: false };
 
@@ -42,13 +46,16 @@ function reducer(state, action) {
   }
 }
 
+// VOLT live tracking — BackBar "RECORDING" + live pill. Activity icon row,
+// big 96px mono accent timer, 3-col stat grid, pause/stop controls.
+const DEFAULT_ACTIVITY = { title: 'Surfing', type: 'surfing' };
+
 export default function ActivityTrackingScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const activity = route?.params?.activity || {
-    title: 'Surfing',
-    type: 'surfing',
-    image: 'https://images.unsplash.com/photo-1502933691298-84fc14542831?w=1200&q=80',
-  };
+  const activity = useMemo(
+    () => route?.params?.activity || DEFAULT_ACTIVITY,
+    [route?.params?.activity]
+  );
   const isIndoor = INDOOR_TYPES.includes(activity.type);
 
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -79,7 +86,7 @@ export default function ActivityTrackingScreen({ navigation, route }) {
 
   const distanceMi = useMemo(() => pathDistanceMiles(path), [path]);
   const paceMinPerMi = distanceMi > 0 ? seconds / 60 / distanceMi : 0;
-  const progress = (seconds % 600) / 600;
+  const kcal = Math.round(seconds * 0.18);
 
   const finish = useCallback(() => {
     watchRef.current?.remove?.();
@@ -94,44 +101,25 @@ export default function ActivityTrackingScreen({ navigation, route }) {
   const togglePause = useCallback(() => dispatch({ type: 'togglePause' }), []);
   const toggleMap = useCallback(() => dispatch({ type: 'toggleMap' }), []);
 
-  const headerStyle = useMemo(
-    () => [styles.headerRow, { paddingTop: insets.top + 8 }],
-    [insets.top]
-  );
-  const footerStyle = useMemo(
-    () => [styles.footer, { paddingBottom: insets.bottom + spacing.xl }],
-    [insets.bottom]
-  );
-
   return (
-    <ImageBackground source={{ uri: activity.image }} style={styles.bg}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
-      <View style={headerStyle}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-        >
-          <Ionicons name="chevron-back" size={28} color={colors.white} />
-        </TouchableOpacity>
-        {!isIndoor ? (
-          <TouchableOpacity
-            onPress={toggleMap}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel={showMap ? 'Show stats' : 'Show map'}
-          >
-            <Ionicons
-              name={showMap ? 'speedometer-outline' : 'map-outline'}
-              size={24}
-              color={colors.white}
-            />
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.headerSpacer} />
-        )}
+      <HeaderBar
+        onBack={() => navigation.goBack()}
+        title="RECORDING"
+        rightIcon={isIndoor ? undefined : showMap ? 'speedometer-outline' : 'map-outline'}
+        onRight={isIndoor ? undefined : toggleMap}
+      />
+
+      <View style={styles.livePillRow}>
+        <View style={[styles.livePill, !running && styles.livePillPaused]}>
+          <View
+            style={[styles.liveDot, { backgroundColor: running ? colors.accent : colors.textMute }]}
+          />
+          <Mono size={10} weight="500" color={running ? colors.accent : colors.textMute}>
+            {running ? 'LIVE' : 'PAUSED'}
+          </Mono>
+        </View>
       </View>
 
       {showMap && path.length > 0 ? (
@@ -156,144 +144,152 @@ export default function ActivityTrackingScreen({ navigation, route }) {
         </View>
       ) : (
         <View style={styles.body}>
-          <Text style={styles.kicker}>{strings.activity.currentActivity}</Text>
-          <IconBadge
-            icon={activity.type === 'hiking' ? 'mountain' : 'wave'}
-            size={88}
-            color={colors.accent}
-            bg={colors.surface}
-            style={styles.activityBadge}
-          />
-          <Text style={styles.activityName}>{activity.title}</Text>
-
-          <View style={styles.timerWrap}>
-            <TimerRing
-              size={300}
-              stroke={4}
-              progress={progress}
-              time={formatTime(seconds)}
-              label={strings.activity.minutes}
+          <View style={styles.activityRow}>
+            <IconBadge
+              icon={ACTIVITY_ICONS[activity.type] || 'wave'}
+              size={42}
+              bg="transparent"
+              border="transparent"
+              color={colors.accent}
             />
+            <View style={{ marginLeft: spacing.m }}>
+              <Caps size={10} color={colors.textMute}>
+                Session
+              </Caps>
+              <Text style={styles.activityName}>{activity.title}</Text>
+            </View>
           </View>
 
-          {!isIndoor ? (
-            <View style={styles.metricsRow}>
-              <View style={styles.metric}>
-                <Text style={styles.metricValue}>{distanceMi.toFixed(2)}</Text>
-                <Text style={styles.metricLabel}>{strings.activity.miles}</Text>
+          <View style={styles.timerWrap}>
+            <Caps size={11} color={colors.textMute}>
+              Elapsed
+            </Caps>
+            <Text style={styles.timer}>{formatTime(seconds)}</Text>
+          </View>
+
+          <View style={styles.statGrid}>
+            <View style={styles.statCell}>
+              <Caps size={9} color={colors.textMute}>
+                Dist
+              </Caps>
+              <View style={styles.statValRow}>
+                <Mono size={24} color={colors.text} weight="500">
+                  {distanceMi.toFixed(2)}
+                </Mono>
+                <Mono size={10} color={colors.textMute} style={{ marginLeft: 4 }}>
+                  mi
+                </Mono>
               </View>
-              <View style={styles.metricDivider} />
-              <View style={styles.metric}>
-                <Text style={styles.metricValue}>
+            </View>
+            <View style={styles.statCellDivider} />
+            <View style={styles.statCell}>
+              <Caps size={9} color={colors.textMute}>
+                Cal
+              </Caps>
+              <View style={styles.statValRow}>
+                <Mono size={24} color={colors.text} weight="500">
+                  {kcal}
+                </Mono>
+                <Mono size={10} color={colors.textMute} style={{ marginLeft: 4 }}>
+                  kcal
+                </Mono>
+              </View>
+            </View>
+            <View style={styles.statCellDivider} />
+            <View style={styles.statCell}>
+              <Caps size={9} color={colors.textMute}>
+                Pace
+              </Caps>
+              <View style={styles.statValRow}>
+                <Mono size={24} color={colors.text} weight="500">
                   {paceMinPerMi > 0 && Number.isFinite(paceMinPerMi)
                     ? `${Math.floor(paceMinPerMi)}:${String(
                         Math.round((paceMinPerMi % 1) * 60)
                       ).padStart(2, '0')}`
                     : '--:--'}
-                </Text>
-                <Text style={styles.metricLabel}>{strings.activity.minPerMi}</Text>
+                </Mono>
+                <Mono size={10} color={colors.textMute} style={{ marginLeft: 4 }}>
+                  /mi
+                </Mono>
               </View>
             </View>
-          ) : (
-            <Text style={styles.statusText}>
-              {running ? strings.activity.inProgress : strings.activity.paused}
-            </Text>
-          )}
+          </View>
         </View>
       )}
 
-      <View style={footerStyle}>
-        <View style={styles.controlRow}>
-          <TouchableOpacity
-            activeOpacity={0.85}
-            style={styles.pauseBtn}
-            onPress={togglePause}
-            accessibilityRole="button"
-            accessibilityLabel={running ? 'Pause activity' : 'Resume activity'}
-          >
-            <Ionicons name={running ? 'pause' : 'play'} size={28} color={colors.white} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            activeOpacity={0.85}
-            style={styles.endBtn}
-            onPress={finish}
-            accessibilityRole="button"
-            accessibilityLabel="End activity"
-          >
-            <Ionicons name="stop" size={22} color={colors.white} />
-            <Text style={styles.endLabel}>{strings.activity.end}</Text>
-          </TouchableOpacity>
+      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.l }]}>
+        <View style={{ flex: 1 }}>
+          <OutlineButton label={running ? 'Pause' : 'Resume'} onPress={togglePause} />
+        </View>
+        <View style={{ width: spacing.m }} />
+        <View style={{ flex: 1 }}>
+          <PrimaryButton label="Stop" variant="secondary" trailingIcon="stop" onPress={finish} />
         </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bg: { flex: 1, backgroundColor: colors.bgDark },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  container: { flex: 1, backgroundColor: colors.bg },
+  livePillRow: {
     alignItems: 'center',
-    paddingHorizontal: spacing.base,
-    paddingBottom: spacing.s,
+    paddingVertical: spacing.s,
   },
-  headerSpacer: { width: 24 },
-  body: { flex: 1, alignItems: 'center', paddingTop: spacing.l },
-  kicker: { ...typography.labelCaps, color: colors.white, opacity: 0.85 },
-  activityBadge: { marginTop: spacing.base },
-  activityName: { color: colors.white, fontSize: 22, fontWeight: '300', marginTop: spacing.m },
-  timerWrap: { marginTop: spacing.xxl },
-  statusText: {
-    color: colors.white,
-    ...typography.h3,
-    fontWeight: '300',
-    textAlign: 'center',
-    marginTop: spacing.xl,
-  },
-  metricsRow: {
+  livePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.xxl,
-    paddingHorizontal: spacing.xxl,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: colors.line,
   },
-  metric: { flex: 1, alignItems: 'center' },
-  metricValue: { color: colors.white, fontSize: 32, fontWeight: '300' },
-  metricLabel: {
-    ...typography.labelCapsSmall,
-    color: colors.white,
-    opacity: 0.85,
-    marginTop: 4,
+  livePillPaused: { opacity: 0.7 },
+  liveDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
+  body: {
+    flex: 1,
+    paddingHorizontal: spacing.edge,
+    paddingTop: spacing.base,
   },
-  metricDivider: { width: 1, height: 36, backgroundColor: 'rgba(255,255,255,0.3)' },
+  activityRow: { flexDirection: 'row', alignItems: 'center' },
+  activityName: { ...typography.title, fontSize: 22, color: colors.text },
+  timerWrap: {
+    alignItems: 'flex-start',
+    paddingVertical: spacing.xl,
+  },
+  timer: {
+    ...typography.monoDisplay,
+    fontSize: 96,
+    lineHeight: 100,
+    color: colors.accent,
+    letterSpacing: -5,
+    marginTop: 6,
+  },
+  statGrid: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.lineSoft,
+    paddingVertical: spacing.base,
+    marginTop: spacing.base,
+  },
+  statCell: { flex: 1, alignItems: 'flex-start' },
+  statValRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 4 },
+  statCellDivider: { width: 1, backgroundColor: colors.lineSoft },
   miniMapWrap: {
     flex: 1,
-    margin: spacing.base,
+    marginHorizontal: spacing.edge,
+    marginVertical: spacing.base,
     borderRadius: radius.l,
     overflow: 'hidden',
     backgroundColor: colors.surface,
-    ...shadows.card,
-  },
-  footer: { alignItems: 'center', paddingTop: spacing.l },
-  controlRow: { flexDirection: 'row', alignItems: 'center' },
-  pauseBtn: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderColor: colors.lineSoft,
   },
-  endBtn: {
+  footer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.l,
-    paddingVertical: spacing.m,
-    backgroundColor: colors.like,
-    borderRadius: radius.pill,
-    marginLeft: spacing.l,
+    paddingHorizontal: spacing.edge,
+    paddingTop: spacing.base,
   },
-  endLabel: { ...typography.labelCaps, color: colors.white, marginLeft: spacing.s },
 });

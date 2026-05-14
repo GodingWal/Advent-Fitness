@@ -2,8 +2,7 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 import { logger } from './logger';
 
-const RAW_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || Constants.expoConfig?.extra?.apiUrl || '';
+const RAW_BASE_URL = process.env.EXPO_PUBLIC_API_URL || Constants.expoConfig?.extra?.apiUrl || '';
 
 const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !== 'production';
 

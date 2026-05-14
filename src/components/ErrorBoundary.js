@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import PrimaryButton from './PrimaryButton';
 import { logger } from '../services/logger';
-import { colors, spacing, radius, typography } from '../theme';
+import { colors, spacing, typography } from '../theme';
 import { strings } from '../i18n/strings';
 
 export default class ErrorBoundary extends React.Component {
@@ -23,16 +24,17 @@ export default class ErrorBoundary extends React.Component {
 
     return (
       <View style={styles.root} accessibilityRole="alert" accessibilityLiveRegion="assertive">
-        <Text style={styles.title}>{strings.errors.unexpectedTitle}</Text>
+        <Text style={styles.title}>
+          {strings.errors.unexpectedTitle}
+          <Text style={{ color: colors.accent }}>.</Text>
+        </Text>
         <Text style={styles.body}>{strings.errors.unexpectedBody}</Text>
-        <TouchableOpacity
-          style={styles.btn}
+        <PrimaryButton
+          label={strings.errors.tryAgain}
           onPress={this.reset}
-          accessibilityRole="button"
-          accessibilityLabel={strings.errors.tryAgain}
-        >
-          <Text style={styles.btnLabel}>{strings.errors.tryAgain}</Text>
-        </TouchableOpacity>
+          trailingIcon="refresh"
+          style={styles.btn}
+        />
       </View>
     );
   }
@@ -41,24 +43,23 @@ export default class ErrorBoundary extends React.Component {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.bgDark,
+    backgroundColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.xl,
   },
-  title: { ...typography.h2, color: colors.white, textAlign: 'center', marginBottom: spacing.m },
+  title: {
+    ...typography.h2,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.m,
+  },
   body: {
     ...typography.body,
-    color: colors.white,
-    opacity: 0.85,
+    color: colors.textMute,
     textAlign: 'center',
     marginBottom: spacing.xl,
+    maxWidth: 280,
   },
-  btn: {
-    backgroundColor: colors.accent,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.m,
-    borderRadius: radius.pill,
-  },
-  btnLabel: { ...typography.labelCaps, color: colors.white },
+  btn: { minWidth: 220 },
 });

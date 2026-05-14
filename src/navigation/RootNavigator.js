@@ -89,5 +89,5 @@ export default function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
-  splash: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bgDark },
+  splash: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
 });

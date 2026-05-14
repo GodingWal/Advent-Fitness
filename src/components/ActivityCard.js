@@ -1,15 +1,16 @@
 import React from 'react';
 import { View, Text, ImageBackground, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { colors, spacing, radius, typography, shadows } from '../theme';
-import IconBadge from './IconBadge';
+import { colors, spacing, radius, typography } from '../theme';
+import { Caps } from './VoltPrimitives';
 
+// VOLT spot/program card — sharp 6px radius, surface bg with image header.
+// `wide` variant is a full-bleed hero with bottom gradient + h3 title.
 export default function ActivityCard({
   title,
   sublabel,
   image,
-  icon = 'wave',
-  width = 220,
-  height = 280,
+  width = 170,
+  height = 200,
   variant = 'tile',
   onPress,
 }) {
@@ -19,8 +20,12 @@ export default function ActivityCard({
         <Image source={{ uri: image }} style={styles.wideImg} />
         <View style={styles.wideOverlay} />
         <View style={styles.wideText}>
+          {sublabel ? (
+            <Caps size={10} color={colors.text} style={styles.wideKicker}>
+              {sublabel}
+            </Caps>
+          ) : null}
           <Text style={styles.wideTitle}>{title}</Text>
-          {sublabel ? <Text style={styles.wideSub}>{sublabel}</Text> : null}
         </View>
       </TouchableOpacity>
     );
@@ -28,13 +33,20 @@ export default function ActivityCard({
 
   return (
     <TouchableOpacity activeOpacity={0.9} onPress={onPress} style={[styles.wrap, { width }]}>
-      <ImageBackground source={{ uri: image }} style={[styles.image, { height: height * 0.65 }]} imageStyle={styles.imgRadius} />
-      <View style={[styles.foot, { height: height * 0.35 }]}>
-        <Text style={styles.title}>{title}</Text>
-        {sublabel ? <Text style={styles.sub}>{sublabel}</Text> : null}
-      </View>
-      <View style={styles.badgeWrap}>
-        <IconBadge icon={icon} size={56} />
+      <ImageBackground
+        source={{ uri: image }}
+        style={[styles.image, { height: 110 }]}
+        imageStyle={styles.imgRadius}
+      />
+      <View style={styles.foot}>
+        <Text style={styles.title} numberOfLines={1}>
+          {title}
+        </Text>
+        {sublabel ? (
+          <Caps size={9} color={colors.textMute} style={styles.sub}>
+            {sublabel}
+          </Caps>
+        ) : null}
       </View>
     </TouchableOpacity>
   );
@@ -44,47 +56,51 @@ const styles = StyleSheet.create({
   wrap: {
     borderRadius: radius.l,
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     marginRight: spacing.m,
-    overflow: 'visible',
-    ...shadows.card,
-  },
-  image: {
     overflow: 'hidden',
   },
-  imgRadius: { borderTopLeftRadius: radius.l, borderTopRightRadius: radius.l },
+  image: {
+    backgroundColor: colors.surface2,
+  },
+  imgRadius: {
+    borderTopLeftRadius: radius.l,
+    borderTopRightRadius: radius.l,
+  },
   foot: {
-    paddingTop: spacing.xl,
-    paddingHorizontal: spacing.base,
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderBottomLeftRadius: radius.l,
-    borderBottomRightRadius: radius.l,
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.m,
   },
-  title: { ...typography.h3, color: colors.textPrimary, fontWeight: '400' },
-  sub: { ...typography.labelCapsSmall, color: colors.textSecondary, marginTop: 4 },
-  badgeWrap: {
-    position: 'absolute',
-    alignSelf: 'center',
-    top: '55%',
-    marginTop: -28,
+  title: {
+    ...typography.body,
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
   },
+  sub: { marginTop: 4 },
   wideWrap: {
     width: '100%',
     borderRadius: radius.l,
     overflow: 'hidden',
     marginBottom: spacing.base,
-    ...shadows.card,
+    backgroundColor: colors.surface,
   },
   wideImg: { width: '100%', height: '100%' },
   wideOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(10,12,16,0.45)',
   },
   wideText: {
     position: 'absolute',
-    left: spacing.l,
-    bottom: spacing.l,
+    left: spacing.base,
+    bottom: spacing.base,
+    right: spacing.base,
   },
-  wideTitle: { ...typography.h2, color: colors.textOnDark, fontWeight: '300' },
-  wideSub: { ...typography.body, color: colors.textOnDark, marginTop: 4 },
+  wideKicker: { marginBottom: 6 },
+  wideTitle: {
+    ...typography.h3,
+    fontSize: 24,
+    color: colors.text,
+  },
 });

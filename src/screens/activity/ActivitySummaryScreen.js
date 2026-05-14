@@ -1,12 +1,21 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Switch } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Switch,
+} from 'react-native';
 import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import HeaderBar from '../../components/HeaderBar';
 import PrimaryButton from '../../components/PrimaryButton';
+import { Caps, Mono } from '../../components/VoltPrimitives';
 import { useApp } from '../../state/AppContext';
 import { applyPrivacyZone } from '../../services/location';
-import { colors, spacing, radius, typography, shadows } from '../../theme';
+import { colors, spacing, radius, typography } from '../../theme';
 
 function formatDuration(sec) {
   const h = Math.floor(sec / 3600);
@@ -71,30 +80,28 @@ export default function ActivitySummaryScreen({ navigation, route }) {
     navigation.navigate('Main');
   };
 
+  const kcal =
+    distanceMi > 0
+      ? Math.round(distanceMi * 110 + (durationSec / 60) * 6)
+      : Math.round((durationSec / 60) * 5);
+
   return (
     <View style={styles.container}>
-      <HeaderBar onBack={() => navigation.goBack()} title="Activity Summary" bordered />
+      <HeaderBar onBack={() => navigation.goBack()} title="SUMMARY" />
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.h1}>Nice work!</Text>
-        <Text style={styles.sub}>{activity?.title || 'Activity'} complete.</Text>
+        <Caps size={10} color={colors.textMute}>
+          {activity?.title || 'Activity'} complete
+        </Caps>
+        <Text style={styles.h1}>
+          Nice <Text style={{ color: colors.accent }}>work.</Text>
+        </Text>
 
         <View style={styles.statsCard}>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{formatDuration(durationSec)}</Text>
-            <Text style={styles.statLabel}>DURATION</Text>
-          </View>
+          <SummaryStat label="Duration" value={formatDuration(durationSec)} />
           <View style={styles.statDivider} />
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{distanceMi.toFixed(2)}</Text>
-            <Text style={styles.statLabel}>MILES</Text>
-          </View>
+          <SummaryStat label="Miles" value={distanceMi.toFixed(2)} />
           <View style={styles.statDivider} />
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>
-              {distanceMi > 0 ? Math.round((distanceMi * 110) + (durationSec / 60) * 6) : Math.round((durationSec / 60) * 5)}
-            </Text>
-            <Text style={styles.statLabel}>CAL EST</Text>
-          </View>
+          <SummaryStat label="Cal Est" value={`${kcal}`} />
         </View>
 
         {region ? (
@@ -112,79 +119,99 @@ export default function ActivitySummaryScreen({ navigation, route }) {
             </MapView>
             {settings.privacyZone?.enabled ? (
               <View style={styles.privacyBadge}>
-                <Ionicons name="shield-checkmark-outline" size={14} color={colors.white} />
-                <Text style={styles.privacyText}>Privacy zone applied</Text>
+                <Ionicons name="shield-checkmark-outline" size={12} color={colors.text} />
+                <Caps size={9} color={colors.text} style={{ marginLeft: 4 }}>
+                  Privacy zone applied
+                </Caps>
               </View>
             ) : null}
           </View>
         ) : (
           <View style={styles.placeholderCard}>
-            <Ionicons name="location-outline" size={28} color={colors.textMuted} />
-            <Text style={styles.placeholder}>No GPS path recorded</Text>
+            <Ionicons name="location-outline" size={22} color={colors.textMute} />
+            <Caps size={10} color={colors.textMute} style={{ marginTop: 8 }}>
+              No GPS path recorded
+            </Caps>
           </View>
         )}
 
-        <Text style={styles.label}>WHERE WERE YOU?</Text>
+        <Caps size={9} color={colors.textMute} style={styles.label}>
+          Where were you?
+        </Caps>
         <TextInput
           value={caption}
           onChangeText={setCaption}
           placeholder="e.g. Sunset Cliffs"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={colors.textDim}
           style={styles.input}
         />
 
         <View style={styles.shareRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.shareTitle}>Share with friends</Text>
-            <Text style={styles.shareSub}>Post this activity to the friends feed.</Text>
+            <Mono size={11}>Post to the friends feed</Mono>
           </View>
           <Switch
             value={shareToFriends}
             onValueChange={setShareToFriends}
-            trackColor={{ true: colors.accent }}
+            trackColor={{ true: colors.accent, false: colors.line }}
+            thumbColor="#0A0C10"
           />
         </View>
 
         <View style={{ marginTop: spacing.l }}>
           <PrimaryButton
             label={shareToFriends ? 'Save & Share' : 'Save'}
+            trailingIcon="checkmark"
             onPress={save}
-            style={{ backgroundColor: colors.accent }}
-            textStyle={{ color: colors.white }}
           />
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('Main')} style={styles.discard}>
-          <Text style={styles.discardLabel}>Discard</Text>
+          <Caps size={10} color={colors.textDim}>
+            Discard
+          </Caps>
         </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
 
+function SummaryStat({ label, value }) {
+  return (
+    <View style={styles.stat}>
+      <Caps size={9} color={colors.textMute}>
+        {label}
+      </Caps>
+      <Mono size={22} color={colors.text} weight="500" style={{ marginTop: 6 }}>
+        {value}
+      </Mono>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surfaceMuted },
-  scroll: { padding: spacing.base, paddingBottom: 80 },
-  h1: { ...typography.h1, color: colors.textPrimary, fontWeight: '300' },
-  sub: { ...typography.body, color: colors.textSecondary, marginTop: 2 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  scroll: { padding: spacing.edge, paddingBottom: 80 },
+  h1: { ...typography.h1, fontSize: 38, color: colors.text, marginTop: 4 },
   statsCard: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     borderRadius: radius.l,
-    padding: spacing.l,
+    padding: spacing.base,
     marginTop: spacing.l,
-    ...shadows.cardLight,
   },
   stat: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 22, color: colors.textPrimary, fontWeight: '500' },
-  statLabel: { ...typography.labelCapsSmall, color: colors.textMuted, marginTop: 4 },
-  statDivider: { width: 1, backgroundColor: colors.divider },
+  statDivider: { width: 1, backgroundColor: colors.lineSoft },
   mapCard: {
     height: 200,
     borderRadius: radius.l,
     overflow: 'hidden',
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     marginTop: spacing.base,
-    ...shadows.cardLight,
   },
   placeholderCard: {
     height: 120,
@@ -192,41 +219,45 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: radius.l,
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     marginTop: spacing.base,
-    ...shadows.cardLight,
   },
-  placeholder: { ...typography.bodySmall, color: colors.textMuted, marginTop: spacing.s },
   privacyBadge: {
     position: 'absolute',
     bottom: spacing.s,
     left: spacing.s,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(10,12,16,0.7)',
     paddingHorizontal: spacing.s,
     paddingVertical: 4,
-    borderRadius: radius.pill,
+    borderRadius: radius.s,
   },
-  privacyText: { ...typography.caption, color: colors.white, marginLeft: 4 },
-  label: { ...typography.labelCapsSmall, color: colors.textSecondary, marginTop: spacing.l },
+  label: { marginTop: spacing.l },
   input: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    borderBottomColor: colors.line,
     paddingVertical: spacing.m,
-    color: colors.textPrimary,
+    color: colors.text,
     ...typography.body,
+    fontSize: 15,
   },
   shareRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     padding: spacing.base,
     borderRadius: radius.l,
     marginTop: spacing.l,
-    ...shadows.cardLight,
   },
-  shareTitle: { ...typography.body, color: colors.textPrimary, fontWeight: '500' },
-  shareSub: { ...typography.bodySmall, color: colors.textSecondary, marginTop: 2 },
+  shareTitle: {
+    ...typography.body,
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: '600',
+  },
   discard: { alignItems: 'center', paddingVertical: spacing.l },
-  discardLabel: { ...typography.labelCaps, color: colors.textMuted, fontSize: 12 },
 });

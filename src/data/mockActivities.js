@@ -3,7 +3,12 @@ export const ACTIVITY_TYPES = {
   hiking: { id: 'hiking', label: 'Hiking', icon: 'mountain', color: '#4A7BB7' },
   yoga: { id: 'yoga', label: 'Yoga', icon: 'lotus', color: '#4A7BB7' },
   meditation: { id: 'meditation', label: 'Meditation', icon: 'heart', color: '#4A7BB7' },
-  weightLifting: { id: 'weightLifting', label: 'Weight Lifting', icon: 'dumbbell', color: '#4A7BB7' },
+  weightLifting: {
+    id: 'weightLifting',
+    label: 'Weight Lifting',
+    icon: 'dumbbell',
+    color: '#4A7BB7',
+  },
   running: { id: 'running', label: 'Running', icon: 'running', color: '#4A7BB7' },
   cycling: { id: 'cycling', label: 'Cycling', icon: 'bike', color: '#4A7BB7' },
   basketball: { id: 'basketball', label: 'Basketball', icon: 'basketball', color: '#4A7BB7' },
@@ -59,7 +64,28 @@ export const recommendedActivities = [
 ];
 
 export const activityHistory = [
-  { id: 'h1', type: 'surfing', label: 'Surfing', location: 'Sunset Cliffs', durationMin: 90, when: 'Today, 5:37 PM' },
-  { id: 'h2', type: 'hiking', label: 'Hiking', location: 'Yosemite Ntl. Park', durationMin: 195, when: 'Yesterday, 10:34 AM' },
-  { id: 'h3', type: 'cycling', label: 'Cycling', location: 'Little Italy', durationMin: 35, when: 'Yesterday, 10:47 AM' },
+  {
+    id: 'h1',
+    type: 'surfing',
+    label: 'Surfing',
+    location: 'Sunset Cliffs',
+    durationMin: 90,
+    when: 'Today, 5:37 PM',
+  },
+  {
+    id: 'h2',
+    type: 'hiking',
+    label: 'Hiking',
+    location: 'Yosemite Ntl. Park',
+    durationMin: 195,
+    when: 'Yesterday, 10:34 AM',
+  },
+  {
+    id: 'h3',
+    type: 'cycling',
+    label: 'Cycling',
+    location: 'Little Italy',
+    durationMin: 35,
+    when: 'Yesterday, 10:47 AM',
+  },
 ];

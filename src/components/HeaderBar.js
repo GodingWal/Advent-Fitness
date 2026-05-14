@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing, typography } from '../theme';
+import { colors, spacing, radius, typography } from '../theme';
 
+// VOLT BackBar — 36×36 bordered back square left, centered UPPERCASE title,
+// right slot for action icons. Background defaults to bg.
 export default function HeaderBar({
   title,
   onMenu,
@@ -11,9 +13,9 @@ export default function HeaderBar({
   rightIcon,
   rightBadge,
   onRight,
-  background = colors.surface,
-  iconColor = colors.textPrimary,
-  titleColor = colors.textPrimary,
+  background = colors.bg,
+  iconColor = colors.text,
+  titleColor = colors.text,
   bordered = false,
 }) {
   const insets = useSafeAreaInsets();
@@ -22,27 +24,27 @@ export default function HeaderBar({
       style={[
         styles.wrap,
         bordered && styles.bordered,
-        { backgroundColor: background, paddingTop: insets.top + 6 },
+        { backgroundColor: background, paddingTop: insets.top + 12 },
       ]}
     >
       <View style={styles.left}>
         {onBack ? (
           <TouchableOpacity
-            hitSlop={12}
             onPress={onBack}
+            style={[styles.iconBox, { borderColor: colors.line }]}
             accessibilityRole="button"
             accessibilityLabel="Back"
           >
-            <Ionicons name="chevron-back" size={28} color={iconColor} />
+            <Ionicons name="chevron-back" size={20} color={iconColor} />
           </TouchableOpacity>
         ) : onMenu ? (
           <TouchableOpacity
-            hitSlop={12}
             onPress={onMenu}
+            style={[styles.iconBox, { borderColor: colors.line }]}
             accessibilityRole="button"
             accessibilityLabel="Open navigation menu"
           >
-            <Ionicons name="menu" size={26} color={iconColor} />
+            <Ionicons name="menu" size={18} color={iconColor} />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -51,6 +53,7 @@ export default function HeaderBar({
           <Text
             style={[styles.title, { color: titleColor }]}
             accessibilityRole="header"
+            numberOfLines={1}
           >
             {title}
           </Text>
@@ -59,13 +62,13 @@ export default function HeaderBar({
       <View style={styles.right}>
         {rightIcon ? (
           <TouchableOpacity
-            hitSlop={12}
             onPress={onRight}
             style={styles.rightBtn}
             accessibilityRole="button"
             accessibilityLabel={`${rightIcon} action`}
+            hitSlop={12}
           >
-            <Ionicons name={rightIcon} size={26} color={iconColor} />
+            <Ionicons name={rightIcon} size={22} color={iconColor} />
             {rightBadge ? (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{rightBadge}</Text>
@@ -82,26 +85,45 @@ const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.base,
+    paddingHorizontal: spacing.edge,
     paddingBottom: spacing.m,
   },
-  bordered: { borderBottomWidth: 1, borderBottomColor: colors.divider },
+  bordered: { borderBottomWidth: 1, borderBottomColor: colors.lineSoft },
   left: { width: 60, alignItems: 'flex-start' },
   center: { flex: 1, alignItems: 'center' },
   right: { width: 60, alignItems: 'flex-end' },
-  title: { ...typography.h3, fontWeight: '400' },
+  iconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.s,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    ...typography.caps,
+    fontSize: 11,
+    letterSpacing: 2.4,
+    color: colors.text,
+  },
   rightBtn: { padding: 4 },
   badge: {
     position: 'absolute',
-    top: -2,
+    top: 0,
     right: -2,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: colors.accentTeal,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 2,
+    backgroundColor: colors.accent,
     paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: { color: colors.white, fontSize: 11, fontWeight: '600' },
+  badgeText: {
+    color: '#0A0C10',
+    fontSize: 9,
+    fontWeight: '700',
+    fontFamily: typography.mono.fontFamily,
+    letterSpacing: 0.4,
+  },
 });

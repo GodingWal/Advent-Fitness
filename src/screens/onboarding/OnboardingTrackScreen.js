@@ -1,83 +1,184 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import IconBadge from '../../components/IconBadge';
+import HeaderBar from '../../components/HeaderBar';
+import { Caps, ProgressBar } from '../../components/VoltPrimitives';
 import PageDots from '../../components/PageDots';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useAuth } from '../../state/AuthContext';
-import { colors, spacing, typography } from '../../theme';
+import { colors, spacing, radius, typography } from '../../theme';
+
+// VOLT onboarding 02 — Goal picker. Caps "Profile / 02", h1 "Set a / target."
+// Goal card with 84px mono accent number + 5 toggle pills.
+const HOURS = [4, 6, 8, 10, 12];
 
 export default function OnboardingTrackScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { signIn } = useAuth();
-  const skip = () => signIn({ email: 'guest@adventfitness.app' });
+  const [target, setTarget] = React.useState(10);
+  const [mode, setMode] = React.useState('build');
+  const skip = () => signIn({ email: 'guest@volt.app' });
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <View style={[styles.headerRow, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={28} color={colors.white} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={skip} hitSlop={12}>
-          <Text style={styles.skip}>SKIP</Text>
-        </TouchableOpacity>
-      </View>
+      <HeaderBar
+        onBack={() => navigation.goBack()}
+        title="ONBOARDING"
+        rightIcon="close-outline"
+        onRight={skip}
+      />
 
-      <View style={styles.body}>
-        <Text style={styles.title}>{'Easily Track\nAny Activity'}</Text>
-        <View style={styles.divider} />
-        <Text style={styles.sub}>Log & record your activities</Text>
+      <View style={[styles.body, { paddingBottom: insets.bottom + spacing.xl }]}>
+        <Caps size={10} color={colors.textMute}>
+          Profile / 02
+        </Caps>
+        <Text style={styles.title}>
+          Set a{'\n'}
+          <Text style={{ color: colors.accent }}>target.</Text>
+        </Text>
 
-        <View style={styles.iconWrap}>
-          <View style={styles.glow} />
-          <View style={styles.glow2} />
-          <IconBadge icon="diamondPlus" size={150} bg={colors.accent} color={colors.white} />
+        <View style={styles.goalCard}>
+          <Caps size={10} color={colors.textMute}>
+            Weekly hours
+          </Caps>
+          <View style={styles.bigRow}>
+            <Text style={styles.bigNum}>{target}</Text>
+            <Text style={styles.bigUnit}>h</Text>
+          </View>
+
+          <View style={styles.pillRow}>
+            {HOURS.map((h) => {
+              const active = h === target;
+              return (
+                <TouchableOpacity
+                  key={h}
+                  style={[styles.pill, active && styles.pillActive]}
+                  onPress={() => setTarget(h)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.pillText, active && styles.pillTextActive]}>{h}h</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
-        <View style={styles.dots}>
-          <PageDots count={3} active={1} />
+        <View style={styles.modeRow}>
+          {['build', 'maintain'].map((m) => {
+            const active = m === mode;
+            return (
+              <TouchableOpacity
+                key={m}
+                style={[styles.modeCard, active && styles.modeCardActive]}
+                onPress={() => setMode(m)}
+                activeOpacity={0.85}
+              >
+                <View style={styles.modeRow2}>
+                  <View style={[styles.modeIndicator, active && styles.modeIndicatorActive]} />
+                  <Text style={styles.modeLabel}>{m === 'build' ? 'Build' : 'Maintain'}</Text>
+                </View>
+                <Text style={styles.modeSub}>
+                  {m === 'build' ? 'Push past your baseline' : 'Hold the routine'}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
-      </View>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.xl }]}>
-        <PrimaryButton label="Next" onPress={() => navigation.navigate('OnboardingFavorites')} />
+        <View style={styles.progressWrap}>
+          <Caps size={9} color={colors.textMute} style={{ marginBottom: 6 }}>
+            Weekly progress · 6.6 / {target}h
+          </Caps>
+          <ProgressBar value={6.6 / target} />
+        </View>
+
+        <View style={styles.spacer} />
+
+        <PageDots count={3} active={1} />
+        <View style={{ marginTop: spacing.l }}>
+          <PrimaryButton
+            label="Next"
+            trailingIcon="arrow-forward"
+            onPress={() => navigation.navigate('OnboardingFavorites')}
+          />
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgDark },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.base,
-    paddingBottom: spacing.s,
+  container: { flex: 1, backgroundColor: colors.bg },
+  body: {
+    flex: 1,
+    paddingHorizontal: spacing.edge,
+    paddingTop: spacing.l,
   },
-  skip: { ...typography.labelCaps, color: 'rgba(255,255,255,0.5)' },
-  body: { flex: 1, alignItems: 'center', paddingHorizontal: spacing.xl, paddingTop: spacing.xl },
-  title: { ...typography.h1, color: colors.textOnDark, textAlign: 'center' },
-  divider: { width: 28, height: 1, backgroundColor: colors.textOnDark, marginVertical: spacing.base, opacity: 0.85 },
-  sub: { ...typography.body, color: colors.textOnDarkMuted, textAlign: 'center' },
-  iconWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  glow: {
-    position: 'absolute',
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: colors.accent,
-    opacity: 0.15,
+  title: {
+    ...typography.h1,
+    fontSize: 38,
+    lineHeight: 40,
+    color: colors.text,
+    marginTop: spacing.s,
+    marginBottom: spacing.xl,
   },
-  glow2: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: colors.accent,
-    opacity: 0.25,
+  goalCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.l,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
+    padding: spacing.l,
   },
-  dots: { marginBottom: spacing.l },
-  footer: { paddingHorizontal: spacing.xxl, paddingTop: spacing.l },
+  bigRow: { flexDirection: 'row', alignItems: 'baseline', marginVertical: spacing.s },
+  bigNum: {
+    ...typography.monoDisplay,
+    fontSize: 84,
+    lineHeight: 88,
+    color: colors.accent,
+    letterSpacing: -4,
+  },
+  bigUnit: {
+    ...typography.mono,
+    fontSize: 22,
+    color: colors.textMute,
+    marginLeft: 6,
+  },
+  pillRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.m },
+  pill: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: radius.m,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
+  },
+  pillActive: {
+    borderColor: colors.accent,
+    backgroundColor: 'rgba(212,255,61,0.1)',
+  },
+  pillText: { ...typography.mono, fontSize: 13, color: colors.textMute },
+  pillTextActive: { color: colors.accent },
+  modeRow: { flexDirection: 'row', gap: spacing.m, marginTop: spacing.base },
+  modeCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.l,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
+    padding: spacing.base,
+    marginHorizontal: 4,
+  },
+  modeCardActive: { borderColor: colors.accent },
+  modeRow2: { flexDirection: 'row', alignItems: 'center' },
+  modeIndicator: {
+    width: 8,
+    height: 8,
+    backgroundColor: colors.line,
+    marginRight: spacing.s,
+  },
+  modeIndicatorActive: { backgroundColor: colors.accent },
+  modeLabel: { ...typography.body, fontSize: 15, fontWeight: '600', color: colors.text },
+  modeSub: { ...typography.bodySmall, color: colors.textMute, marginTop: 4 },
+  progressWrap: { marginTop: spacing.l },
+  spacer: { flex: 1 },
 });

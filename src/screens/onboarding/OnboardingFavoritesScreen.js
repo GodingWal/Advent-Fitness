@@ -1,80 +1,166 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import ActivityCard from '../../components/ActivityCard';
+import HeaderBar from '../../components/HeaderBar';
+import { Caps } from '../../components/VoltPrimitives';
 import PageDots from '../../components/PageDots';
 import PrimaryButton from '../../components/PrimaryButton';
-import { popularActivities } from '../../data/mockActivities';
+import IconBadge from '../../components/IconBadge';
 import { useAuth } from '../../state/AuthContext';
-import { colors, spacing, typography } from '../../theme';
+import { colors, spacing, radius, typography, shadows } from '../../theme';
+
+// VOLT onboarding 03 — Arena picker. 3×3 grid of square tiles. Selected =
+// accent bg + dark text + lime shadow.
+const ARENAS = [
+  { type: 'surfing', label: 'Surf', icon: 'wave' },
+  { type: 'hiking', label: 'Hike', icon: 'mountain' },
+  { type: 'running', label: 'Run', icon: 'run' },
+  { type: 'cycling', label: 'Cycle', icon: 'bike' },
+  { type: 'yoga', label: 'Yoga', icon: 'yoga' },
+  { type: 'meditation', label: 'Meditate', icon: 'meditate' },
+  { type: 'weightLifting', label: 'Lift', icon: 'weight' },
+  { type: 'swimming', label: 'Swim', icon: 'wave' },
+  { type: 'tennis', label: 'Tennis', icon: 'run' },
+];
 
 export default function OnboardingFavoritesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { signIn } = useAuth();
-  const finish = () => signIn({ email: 'guest@adventfitness.app' });
+  const [picked, setPicked] = useState(new Set(['surfing', 'hiking']));
+  const finish = () => signIn({ email: 'guest@volt.app' });
+
+  const togglePick = (type) => {
+    setPicked((p) => {
+      const next = new Set(p);
+      if (next.has(type)) next.delete(type);
+      else if (next.size < 6) next.add(type);
+      return next;
+    });
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <View style={[styles.headerRow, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={28} color={colors.white} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => finish()} hitSlop={12}>
-          <Text style={styles.skip}>SKIP</Text>
-        </TouchableOpacity>
-      </View>
+      <HeaderBar
+        onBack={() => navigation.goBack()}
+        title="ONBOARDING"
+        rightIcon="close-outline"
+        onRight={finish}
+      />
 
-      <View style={styles.titleWrap}>
-        <Text style={styles.title}>{'Add Your\nFavorite Activities'}</Text>
-        <View style={styles.divider} />
-        <Text style={styles.sub}>To Your Personalized Profile</Text>
-      </View>
+      <View style={[styles.body, { paddingBottom: insets.bottom + spacing.xl }]}>
+        <Caps size={10} color={colors.textMute}>
+          Profile / 03
+        </Caps>
+        <Text style={styles.title}>
+          Pick your{'\n'}
+          <Text style={{ color: colors.accent }}>arena.</Text>
+        </Text>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.cards}
-      >
-        {popularActivities.map((a) => (
-          <ActivityCard
-            key={a.id}
-            title={a.title}
-            sublabel={a.sublabel.toUpperCase()}
-            image={a.image}
-            icon={a.type === 'surfing' ? 'wave' : 'mountain'}
-            width={240}
-            height={320}
-          />
-        ))}
-      </ScrollView>
+        <Caps size={9} color={colors.textMute} style={styles.counter}>
+          {picked.size} selected · pick up to 6
+        </Caps>
 
-      <View style={styles.dots}>
-        <PageDots count={3} active={0} />
-      </View>
+        <View style={styles.grid}>
+          {ARENAS.map((a) => {
+            const active = picked.has(a.type);
+            return (
+              <View key={a.type} style={styles.tileWrap}>
+                <TouchableOpacity
+                  style={[styles.tile, active && styles.tileActive]}
+                  onPress={() => togglePick(a.type)}
+                  activeOpacity={0.85}
+                >
+                  <IconBadge
+                    icon={a.icon}
+                    size={28}
+                    color={active ? '#0A0C10' : colors.text}
+                    bg="transparent"
+                    border="transparent"
+                  />
+                  <Text style={[styles.tileLabel, active && styles.tileLabelActive]}>
+                    {a.label.toUpperCase()}
+                  </Text>
+                  {active ? (
+                    <View style={styles.checkPill}>
+                      <Ionicons name="checkmark" size={10} color={colors.accent} />
+                    </View>
+                  ) : null}
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </View>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.xl }]}>
-        <PrimaryButton label="Next" onPress={() => finish()} />
+        <View style={styles.spacer} />
+
+        <PageDots count={3} active={2} />
+        <View style={{ marginTop: spacing.l }}>
+          <PrimaryButton label="Enter VOLT" trailingIcon="arrow-forward" onPress={finish} />
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgDark },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.base,
-    paddingBottom: spacing.s,
+  container: { flex: 1, backgroundColor: colors.bg },
+  body: {
+    flex: 1,
+    paddingHorizontal: spacing.edge,
+    paddingTop: spacing.l,
   },
-  skip: { ...typography.labelCaps, color: 'rgba(255,255,255,0.5)' },
-  titleWrap: { paddingHorizontal: spacing.xl, paddingTop: spacing.l, alignItems: 'center' },
-  title: { ...typography.h1, color: colors.textOnDark, textAlign: 'center' },
-  divider: { width: 28, height: 1, backgroundColor: colors.textOnDark, marginVertical: spacing.base, opacity: 0.85 },
-  sub: { ...typography.body, color: colors.textOnDarkMuted, textAlign: 'center' },
-  cards: { paddingHorizontal: spacing.xl, paddingTop: spacing.xxl, paddingBottom: spacing.l },
-  dots: { marginVertical: spacing.l },
-  footer: { paddingHorizontal: spacing.xxl, paddingTop: spacing.s },
+  title: {
+    ...typography.h1,
+    fontSize: 38,
+    lineHeight: 40,
+    color: colors.text,
+    marginTop: spacing.s,
+  },
+  counter: { marginTop: spacing.m, marginBottom: spacing.base },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -4,
+  },
+  tileWrap: {
+    width: '33.33%',
+    aspectRatio: 1,
+    padding: 4,
+  },
+  tile: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
+    borderRadius: radius.l,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    justifyContent: 'space-between',
+  },
+  tileActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+    ...shadows.selected,
+  },
+  tileLabel: {
+    ...typography.caps,
+    fontSize: 10,
+    color: colors.text,
+    marginTop: 'auto',
+  },
+  tileLabelActive: { color: '#0A0C10' },
+  checkPill: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 18,
+    height: 18,
+    borderRadius: 2,
+    backgroundColor: '#0A0C10',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  spacer: { flex: 1 },
 });

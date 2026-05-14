@@ -21,7 +21,7 @@ import { SAN_DIEGO, getCurrentLocation, haversineMiles } from '../../services/lo
 import { fetchNearbyPOIs, hasPlacesKey } from '../../services/places';
 import { useApp } from '../../state/AppContext';
 import { strings } from '../../i18n/strings';
-import { colors, spacing, radius, typography, shadows } from '../../theme';
+import { colors, spacing, radius, typography } from '../../theme';
 
 const ALL_FILTERS = [
   { id: 'all', label: 'All', icon: 'apps-outline' },
@@ -127,11 +127,10 @@ export default function MapScreen({ navigation }) {
             p.category === 'trails'
               ? 'hiking'
               : p.category === 'gyms'
-              ? 'weightLifting'
-              : 'running',
+                ? 'weightLifting'
+                : 'running',
           image:
-            p.photo ||
-            'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=1200&q=80',
+            p.photo || 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=1200&q=80',
         },
       });
     },
@@ -228,8 +227,10 @@ export default function MapScreen({ navigation }) {
         ) : null}
         {heatmapEnabled ? (
           <View style={styles.heatmapBadge}>
-            <Ionicons name="layers" size={14} color={colors.white} />
-            <Text style={styles.heatmapText}>{strings.map.heatmapBadge(recordedRoutes.length)}</Text>
+            <Ionicons name="layers" size={14} color="#0A0C10" />
+            <Text style={styles.heatmapText}>
+              {strings.map.heatmapBadge(recordedRoutes.length)}
+            </Text>
           </View>
         ) : null}
       </View>
@@ -279,32 +280,34 @@ export default function MapScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surfaceMuted },
+  container: { flex: 1, backgroundColor: colors.bg },
   topOverlay: { position: 'absolute', left: 0, right: 0, top: 0 },
-  searchWrap: { paddingHorizontal: spacing.base },
-  chips: { paddingHorizontal: spacing.base, paddingVertical: spacing.m },
+  searchWrap: { paddingHorizontal: spacing.edge },
+  chips: { paddingHorizontal: spacing.edge, paddingVertical: spacing.m },
   recenter: {
     position: 'absolute',
-    right: spacing.base,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    right: spacing.edge,
+    width: 44,
+    height: 44,
+    borderRadius: radius.m,
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.fab,
   },
   loading: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'center',
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.s,
-    borderRadius: radius.pill,
-    ...shadows.cardLight,
+    borderRadius: radius.m,
   },
-  loadingText: { ...typography.bodySmall, color: colors.textSecondary, marginLeft: spacing.s },
+  loadingText: { ...typography.bodySmall, color: colors.textMute, marginLeft: spacing.s },
   heatmapBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -312,18 +315,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     paddingHorizontal: spacing.m,
     paddingVertical: 6,
-    borderRadius: radius.pill,
+    borderRadius: radius.s,
     marginTop: spacing.xs,
   },
-  heatmapText: { ...typography.caption, color: colors.white, marginLeft: 4, fontWeight: '500' },
+  heatmapText: {
+    ...typography.capsSm,
+    fontSize: 10,
+    color: '#0A0C10',
+    marginLeft: 4,
+    fontWeight: '700',
+  },
   banner: {
     position: 'absolute',
-    left: spacing.base,
-    right: spacing.base,
+    left: spacing.edge,
+    right: spacing.edge,
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     padding: spacing.m,
-    borderRadius: radius.s,
-    ...shadows.cardLight,
+    borderRadius: radius.m,
   },
-  bannerText: { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
+  bannerText: { ...typography.caption, color: colors.textMute, textAlign: 'center' },
 });

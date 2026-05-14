@@ -3,116 +3,135 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import IconBadge from '../../components/IconBadge';
-import { colors, spacing, radius, typography, shadows } from '../../theme';
+import { Caps, Tag } from '../../components/VoltPrimitives';
+import { colors, spacing, radius, typography } from '../../theme';
 
-const OUTDOOR = [
-  { type: 'hiking', label: 'Hiking', icon: 'mountain', subtitle: 'GPS route + elevation' },
-  { type: 'running', label: 'Running', icon: 'wave', subtitle: 'GPS · pace · distance' },
-  { type: 'cycling', label: 'Cycling', icon: 'wave', subtitle: 'GPS · speed · distance' },
-  { type: 'surfing', label: 'Surfing', icon: 'wave', subtitle: 'GPS · session timer' },
-];
-
-const INDOOR = [
-  { type: 'weightLifting', label: 'Strength', icon: 'mountain', subtitle: 'Sets · reps · weight' },
-  { type: 'yoga', label: 'Yoga', icon: 'mountain', subtitle: 'Timed session' },
-  { type: 'meditation', label: 'Meditation', icon: 'mountain', subtitle: 'Timed session' },
+// VOLT Track Activity sheet — drag handle, Caps "CHOOSE YOUR ARENA",
+// 26px "What's the session?", 4-column grid of 8 activity tiles.
+const TILES = [
+  { type: 'surfing', label: 'Surf', icon: 'wave' },
+  { type: 'hiking', label: 'Hike', icon: 'mountain' },
+  { type: 'running', label: 'Run', icon: 'run' },
+  { type: 'cycling', label: 'Cycle', icon: 'bike' },
+  { type: 'yoga', label: 'Yoga', icon: 'yoga' },
+  { type: 'meditation', label: 'Meditate', icon: 'meditate' },
+  { type: 'weightLifting', label: 'Lift', icon: 'weight' },
+  { type: 'swimming', label: 'Swim', icon: 'wave' },
 ];
 
 export default function ActivityPickerScreen({ navigation }) {
   const insets = useSafeAreaInsets();
 
-  const startOutdoor = (item) => {
-    navigation.replace('ActivityTracking', {
-      activity: { title: item.label, type: item.type, image: 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=1200&q=80' },
-    });
-  };
-
-  const startIndoor = (item) => {
+  const start = (item) => {
     if (item.type === 'weightLifting') {
       navigation.replace('IndoorWorkout');
     } else {
       navigation.replace('ActivityTracking', {
-        activity: { title: item.label, type: item.type, image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&q=80' },
+        activity: {
+          title: item.label,
+          type: item.type,
+          image: 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=1200&q=80',
+        },
       });
     }
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <Ionicons name="close" size={26} color={colors.white} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Start an Activity</Text>
-        <View style={{ width: 26 }} />
+    <View style={[styles.container, { paddingTop: insets.top + spacing.s }]}>
+      <View style={styles.handleRow}>
+        <View style={styles.handle} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.section}>OUTDOOR</Text>
-        {OUTDOOR.map((it) => (
-          <TouchableOpacity
-            key={it.type}
-            style={styles.row}
-            activeOpacity={0.85}
-            onPress={() => startOutdoor(it)}
-          >
-            <IconBadge icon={it.icon} size={48} />
-            <View style={styles.rowBody}>
-              <Text style={styles.rowTitle}>{it.label}</Text>
-              <Text style={styles.rowSub}>{it.subtitle}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-          </TouchableOpacity>
-        ))}
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
+          <Ionicons name="close" size={22} color={colors.text} />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }} />
+      </View>
 
-        <Text style={styles.section}>INDOOR</Text>
-        {INDOOR.map((it) => (
-          <TouchableOpacity
-            key={it.type}
-            style={styles.row}
-            activeOpacity={0.85}
-            onPress={() => startIndoor(it)}
-          >
-            <IconBadge icon={it.icon} size={48} />
-            <View style={styles.rowBody}>
-              <Text style={styles.rowTitle}>{it.label}</Text>
-              <Text style={styles.rowSub}>{it.subtitle}</Text>
+      <View style={styles.body}>
+        <Caps size={10} color={colors.textMute}>
+          Choose your arena
+        </Caps>
+        <Text style={styles.title}>{`What's the session?`}</Text>
+
+        <View style={styles.grid}>
+          {TILES.map((it) => (
+            <View key={it.type} style={styles.tileWrap}>
+              <TouchableOpacity style={styles.tile} onPress={() => start(it)} activeOpacity={0.85}>
+                <IconBadge
+                  icon={it.icon}
+                  size={26}
+                  bg="transparent"
+                  border="transparent"
+                  color={colors.text}
+                />
+                <Caps size={10} color={colors.text} style={styles.tileLabel}>
+                  {it.label}
+                </Caps>
+              </TouchableOpacity>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+          ))}
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.importRow}
+        >
+          <Caps size={10} color={colors.textMute} style={{ marginRight: spacing.m }}>
+            Or Import
+          </Caps>
+          <Tag label="GPX" style={{ marginRight: 6 }} />
+          <Tag label="Garmin" style={{ marginRight: 6 }} />
+          <Tag label="Watch" />
+        </ScrollView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgDark },
+  container: { flex: 1, backgroundColor: colors.bgAlt },
+  handleRow: { alignItems: 'center', paddingVertical: spacing.s },
+  handle: { width: 40, height: 3, backgroundColor: colors.line, borderRadius: 0 },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.m,
+    paddingHorizontal: spacing.edge,
+    paddingBottom: spacing.s,
   },
-  title: { ...typography.h3, color: colors.white, fontWeight: '500' },
-  scroll: { padding: spacing.base, paddingBottom: 80 },
-  section: {
-    ...typography.labelCapsSmall,
-    color: 'rgba(255,255,255,0.6)',
-    marginTop: spacing.l,
-    marginBottom: spacing.s,
+  body: {
+    flex: 1,
+    paddingHorizontal: spacing.edge,
+    paddingTop: spacing.m,
   },
-  row: {
+  title: {
+    ...typography.h4,
+    fontSize: 26,
+    color: colors.text,
+    marginTop: spacing.s,
+    marginBottom: spacing.l,
+  },
+  grid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.l,
-    padding: spacing.base,
-    marginBottom: spacing.s,
-    ...shadows.card,
+    flexWrap: 'wrap',
+    marginHorizontal: -4,
   },
-  rowBody: { flex: 1, marginLeft: spacing.base },
-  rowTitle: { ...typography.body, color: colors.textPrimary, fontWeight: '500' },
-  rowSub: { ...typography.bodySmall, color: colors.textSecondary, marginTop: 2 },
+  tileWrap: {
+    width: '25%',
+    aspectRatio: 1,
+    padding: 4,
+  },
+  tile: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
+    borderRadius: radius.l,
+    padding: spacing.s,
+    justifyContent: 'space-between',
+  },
+  tileLabel: { marginTop: 'auto' },
+  importRow: { marginTop: spacing.l, alignItems: 'center' },
 });

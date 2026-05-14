@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import HeaderBar from '../../components/HeaderBar';
 import { useApp } from '../../state/AppContext';
-import { colors, spacing, radius, typography, shadows } from '../../theme';
+import { colors, spacing, radius, typography } from '../../theme';
 
 const STREAK_DAYS = 7;
 
@@ -15,7 +15,7 @@ export default function AchievementsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <HeaderBar onBack={() => navigation.goBack()} title="Achievements" bordered />
+      <HeaderBar onBack={() => navigation.goBack()} title="ACHIEVEMENTS" />
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.streakCard}>
           <View style={styles.streakIcon}>
@@ -49,11 +49,7 @@ function Badge({ item, locked }) {
   return (
     <View style={[styles.badge, locked && styles.badgeLocked]}>
       <View style={[styles.badgeIcon, locked && styles.badgeIconLocked]}>
-        <Ionicons
-          name={item.icon}
-          size={28}
-          color={locked ? colors.textMuted : colors.accent}
-        />
+        <Ionicons name={item.icon} size={20} color={locked ? colors.textDim : '#0A0C10'} />
       </View>
       <Text style={[styles.badgeTitle, locked && styles.badgeTitleLocked]} numberOfLines={1}>
         {item.title}
@@ -72,70 +68,72 @@ function Badge({ item, locked }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surfaceMuted },
-  scroll: { padding: spacing.base, paddingBottom: 80 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  scroll: { padding: spacing.edge, paddingBottom: 80 },
   streakCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     borderRadius: radius.l,
     padding: spacing.base,
-    ...shadows.card,
   },
   streakIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FFF4E6',
+    width: 48,
+    height: 48,
+    borderRadius: radius.s,
+    backgroundColor: colors.accent2,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.base,
   },
-  streakNumber: { ...typography.h2, color: colors.textPrimary, fontWeight: '500' },
-  streakSub: { ...typography.bodySmall, color: colors.textSecondary, marginTop: 2 },
+  streakNumber: { ...typography.h4, fontSize: 22, color: colors.text },
+  streakSub: { ...typography.bodySmall, fontSize: 12, color: colors.textMute, marginTop: 2 },
   section: {
-    ...typography.labelCaps,
-    color: colors.textSecondary,
-    marginTop: spacing.xl,
+    ...typography.caps,
+    fontSize: 10,
+    color: colors.textMute,
+    marginTop: spacing.l,
     marginBottom: spacing.s,
-    fontSize: 12,
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   badge: {
     width: '48%',
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     borderRadius: radius.l,
     padding: spacing.base,
     marginBottom: spacing.m,
-    alignItems: 'center',
-    ...shadows.cardLight,
+    alignItems: 'flex-start',
   },
-  badgeLocked: { opacity: 0.85 },
+  badgeLocked: { opacity: 0.55 },
   badgeIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#EEF3FA',
+    width: 36,
+    height: 36,
+    borderRadius: radius.s,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.s,
   },
-  badgeIconLocked: { backgroundColor: colors.surfaceMuted },
-  badgeTitle: { ...typography.body, color: colors.textPrimary, fontWeight: '500' },
-  badgeTitleLocked: { color: colors.textSecondary },
+  badgeIconLocked: { backgroundColor: colors.surface2 },
+  badgeTitle: { ...typography.body, fontSize: 14, color: colors.text, fontWeight: '600' },
+  badgeTitleLocked: { color: colors.textMute },
   badgeDesc: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 2,
-    minHeight: 32,
+    ...typography.mono,
+    fontSize: 10,
+    color: colors.textMute,
+    marginTop: 4,
+    minHeight: 28,
   },
-  badgeDate: { ...typography.caption, color: colors.accent, marginTop: 4 },
+  badgeDate: { ...typography.mono, fontSize: 10, color: colors.accent, marginTop: 4 },
   progressTrack: {
     width: '100%',
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.divider,
+    backgroundColor: colors.surface2,
     marginTop: spacing.s,
     overflow: 'hidden',
   },

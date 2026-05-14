@@ -3,14 +3,14 @@ import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react
 import Ionicons from '@expo/vector-icons/Ionicons';
 import HeaderBar from '../../components/HeaderBar';
 import { useApp } from '../../state/AppContext';
-import { colors, spacing, radius, typography, shadows } from '../../theme';
+import { colors, spacing, radius, typography } from '../../theme';
 
 export default function MeetupsScreen({ navigation }) {
   const { meetups } = useApp();
 
   return (
     <View style={styles.container}>
-      <HeaderBar onBack={() => navigation.goBack()} title="Group Meetups" bordered />
+      <HeaderBar onBack={() => navigation.goBack()} title="MEETUPS" />
       <FlatList
         data={meetups}
         keyExtractor={(m) => m.id}
@@ -39,8 +39,8 @@ export default function MeetupsScreen({ navigation }) {
                 </View>
                 {item.rsvped ? (
                   <View style={styles.rsvpedBadge}>
-                    <Ionicons name="checkmark" size={12} color={colors.white} />
-                    <Text style={styles.rsvpedText}>RSVP'd</Text>
+                    <Ionicons name="checkmark" size={12} color="#0A0C10" />
+                    <Text style={styles.rsvpedText}>{`RSVP'd`}</Text>
                   </View>
                 ) : null}
               </View>
@@ -53,29 +53,45 @@ export default function MeetupsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surfaceMuted },
-  scroll: { padding: spacing.base, paddingBottom: 80 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  scroll: { padding: spacing.edge, paddingBottom: 80 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.l,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     overflow: 'hidden',
-    marginBottom: spacing.base,
-    ...shadows.card,
+    marginBottom: spacing.m,
   },
   image: { width: '100%', height: 140 },
   body: { padding: spacing.base },
-  title: { ...typography.h3, color: colors.textPrimary, fontWeight: '500' },
+  title: { ...typography.h4, fontSize: 22, color: colors.text },
   row: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.s },
-  rowText: { ...typography.bodySmall, color: colors.textSecondary, marginLeft: 6 },
-  foot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.m },
-  attendees: { ...typography.bodySmall, color: colors.accent, marginLeft: 6, fontWeight: '500' },
+  rowText: { ...typography.bodySmall, fontSize: 12, color: colors.textMute, marginLeft: 6 },
+  foot: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.m,
+  },
+  attendees: {
+    ...typography.mono,
+    fontSize: 12,
+    color: colors.accent,
+    marginLeft: 6,
+  },
   rsvpedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.accent,
     paddingHorizontal: spacing.s,
     paddingVertical: 4,
-    borderRadius: radius.pill,
+    borderRadius: radius.s,
   },
-  rsvpedText: { ...typography.caption, color: colors.white, marginLeft: 4, fontWeight: '600' },
+  rsvpedText: {
+    ...typography.capsSm,
+    color: '#0A0C10',
+    marginLeft: 4,
+    fontWeight: '700',
+  },
 });

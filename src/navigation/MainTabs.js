@@ -8,63 +8,82 @@ import ActivityListScreen from '../screens/activity/ActivityListScreen';
 import DiscoverScreen from '../screens/discover/DiscoverScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import MapScreen from '../screens/map/MapScreen';
-import IconBadge from '../components/IconBadge';
-import { colors, spacing, typography, shadows } from '../theme';
+import { colors, spacing, radius, typography, shadows } from '../theme';
 
 const Tab = createBottomTabNavigator();
 
-const ICONS = {
-  Home: 'home',
-  Activity: 'pulse',
-  Map: 'map',
-  Discover: 'search',
-  Profile: 'person',
+const TABS = {
+  Home: { icon: 'home-outline', iconActive: 'home', label: 'HOME' },
+  Activity: { icon: 'pulse-outline', iconActive: 'pulse', label: 'STATS' },
+  Map: { icon: 'map-outline', iconActive: 'map', label: 'MAP' },
+  Discover: { icon: 'search-outline', iconActive: 'search', label: 'DISCOVER' },
+  Profile: { icon: 'person-outline', iconActive: 'person', label: 'ME' },
 };
 
-function CustomTabBar({ state, descriptors, navigation }) {
+// VOLT BottomBar — 5-column grid `1fr 1fr 110px 1fr 1fr`. Active tab gets a
+// 24×2 lime bar at top. Center is the REC button — accent fill, mono UPPERCASE
+// label, sharp 4px radius.
+function CustomTabBar({ state, navigation }) {
   const insets = useSafeAreaInsets();
   const { routes, index: activeIndex } = state;
 
+  // Insert a pseudo-route for the REC button at index 2 (between Activity and Map).
   return (
-    <View style={[styles.bar, { paddingBottom: insets.bottom + 6 }]}>
+    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 8) + 8 }]}>
       <View style={styles.row}>
-        {routes.map((route, i) => {
-          const isFocused = activeIndex === i;
-          const onPress = () => {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name);
-          };
+        {routes
+          .slice(0, 2)
+          .map((route, i) => renderTab(route, activeIndex === i, navigation, styles))}
 
-          return (
-            <TouchableOpacity
-              key={route.key}
-              style={styles.tab}
-              accessibilityRole="button"
-              onPress={onPress}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name={isFocused ? ICONS[route.name] : `${ICONS[route.name]}-outline`}
-                size={24}
-                color={isFocused ? colors.accent : colors.textMuted}
-              />
-              {isFocused ? (
-                <Text style={[styles.tabLabel, { color: colors.accent }]}>
-                  {route.name.toUpperCase()}
-                </Text>
-              ) : null}
-            </TouchableOpacity>
-          );
-        })}
+        <TouchableOpacity
+          style={styles.recBtn}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('ActivityPicker')}
+          accessibilityRole="button"
+          accessibilityLabel="Record activity"
+        >
+          <View style={styles.recDot} />
+          <Text style={styles.recLabel}>REC</Text>
+        </TouchableOpacity>
+
+        {routes
+          .slice(2)
+          .map((route, i) => renderTab(route, activeIndex === i + 2, navigation, styles))}
       </View>
-      <TouchableOpacity
-        style={styles.fab}
-        activeOpacity={0.85}
-        onPress={() => navigation.navigate('ActivityPicker')}
-      >
-        <IconBadge icon="diamondPlus" size={64} bg={colors.accent} color={colors.white} />
-      </TouchableOpacity>
     </View>
+  );
+}
+
+function renderTab(route, isFocused, navigation, styles) {
+  const spec = TABS[route.name] || { icon: 'ellipse-outline', label: route.name.toUpperCase() };
+  const onPress = () => {
+    const event = navigation.emit({
+      type: 'tabPress',
+      target: route.key,
+      canPreventDefault: true,
+    });
+    if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name);
+  };
+
+  return (
+    <TouchableOpacity
+      key={route.key}
+      style={styles.tab}
+      accessibilityRole="button"
+      accessibilityState={{ selected: isFocused }}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      {isFocused ? <View style={styles.activeBar} /> : null}
+      <Ionicons
+        name={isFocused ? spec.iconActive : spec.icon}
+        size={20}
+        color={isFocused ? colors.accent : colors.textMute}
+      />
+      <Text style={[styles.tabLabel, { color: isFocused ? colors.accent : colors.textMute }]}>
+        {spec.label}
+      </Text>
+    </TouchableOpacity>
   );
 }
 
@@ -76,7 +95,7 @@ export default function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeFeedScreen} />
       <Tab.Screen name="Activity" component={ActivityListScreen} />
-      <Tab.Screen name="Map" component={MapScreen} options={{ tabBarLabel: 'Map' }} />
+      <Tab.Screen name="Map" component={MapScreen} />
       <Tab.Screen name="Discover" component={DiscoverScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
@@ -85,25 +104,57 @@ export default function MainTabs() {
 
 const styles = StyleSheet.create({
   bar: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(10,12,16,0.94)',
     borderTopWidth: 1,
-    borderTopColor: colors.divider,
-    paddingTop: 6,
-    ...shadows.cardLight,
+    borderTopColor: colors.lineSoft,
+    paddingTop: 8,
+    paddingHorizontal: spacing.base,
   },
-  row: { flexDirection: 'row', alignItems: 'flex-end' },
+  row: { flexDirection: 'row', alignItems: 'center' },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: spacing.s,
-    paddingBottom: spacing.s,
-    minHeight: 56,
+    height: 48,
+    position: 'relative',
   },
-  tabLabel: { ...typography.labelCapsSmall, marginTop: 2 },
-  fab: {
+  activeBar: {
     position: 'absolute',
+    top: -8,
     alignSelf: 'center',
-    bottom: 32,
+    width: 24,
+    height: 2,
+    backgroundColor: colors.accent,
+  },
+  tabLabel: {
+    ...typography.caps,
+    fontSize: 9,
+    letterSpacing: 1.4,
+    marginTop: 4,
+  },
+  recBtn: {
+    width: 110,
+    height: 48,
+    marginHorizontal: spacing.s,
+    backgroundColor: colors.accent,
+    borderRadius: radius.m,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.fab,
+  },
+  recDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#0A0C10',
+    marginRight: 8,
+  },
+  recLabel: {
+    ...typography.caps,
+    fontSize: 11,
+    color: '#0A0C10',
+    fontWeight: '700',
+    letterSpacing: 2,
   },
 });

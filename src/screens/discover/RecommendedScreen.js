@@ -8,7 +8,7 @@ import { colors, spacing } from '../../theme';
 export default function RecommendedScreen({ navigation }) {
   return (
     <View style={styles.container}>
-      <HeaderBar onBack={() => navigation.goBack()} title="Recommended" bordered />
+      <HeaderBar onBack={() => navigation.goBack()} title="RECOMMENDED" />
       <ScrollView contentContainerStyle={styles.scroll}>
         {recommendedActivities.map((a) => (
           <ActivityCard
@@ -27,6 +27,6 @@ export default function RecommendedScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surfaceMuted },
-  scroll: { padding: spacing.base, paddingBottom: 120 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  scroll: { padding: spacing.edge, paddingBottom: 120 },
 });

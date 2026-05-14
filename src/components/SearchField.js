@@ -1,41 +1,50 @@
 import React from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { colors, radius, spacing, typography, shadows } from '../theme';
+import { colors, radius, spacing, typography } from '../theme';
 
+// VOLT search field — surface bg, lineSoft border, radius 4, padding 14×16.
 export default function SearchField({
   value,
   onChangeText,
   placeholder = 'Search',
   onSubmit,
   variant = 'attached',
+  hint,
   style,
 }) {
   if (variant === 'plain') {
     return (
       <View style={[styles.plainWrap, style]}>
-        <Ionicons name="search" size={18} color={colors.textSecondary} />
+        <Ionicons name="search-outline" size={18} color={colors.textMute} />
         <TextInput
           style={styles.plainInput}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={colors.textSecondary}
+          placeholderTextColor={colors.textMute}
           onSubmitEditing={onSubmit}
           returnKeyType="search"
           accessibilityLabel={placeholder}
         />
+        {hint ? <Text style={styles.hint}>{hint}</Text> : null}
       </View>
     );
   }
   return (
     <View style={[styles.wrap, style]}>
+      <Ionicons
+        name="search-outline"
+        size={18}
+        color={colors.textMute}
+        style={{ marginRight: spacing.s }}
+      />
       <TextInput
         style={styles.input}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={colors.textSecondary}
+        placeholderTextColor={colors.textMute}
         onSubmitEditing={onSubmit}
         returnKeyType="search"
       />
@@ -45,7 +54,7 @@ export default function SearchField({
         accessibilityRole="button"
         accessibilityLabel="Search"
       >
-        <Ionicons name="search" size={20} color={colors.white} />
+        <Text style={styles.btnLabel}>⌘K</Text>
       </TouchableOpacity>
     </View>
   );
@@ -54,36 +63,50 @@ export default function SearchField({
 const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: radius.s,
-    overflow: 'hidden',
-    ...shadows.card,
+    borderRadius: radius.m,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
+    paddingHorizontal: spacing.base,
+    height: 48,
   },
   input: {
     flex: 1,
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.base,
     ...typography.body,
-    color: colors.textPrimary,
+    fontSize: 14,
+    color: colors.text,
+    paddingVertical: 0,
   },
   btn: {
-    width: 64,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: radius.s,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
+  },
+  btnLabel: {
+    ...typography.capsSm,
+    color: colors.textMute,
+    letterSpacing: 1.2,
   },
   plainWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.s,
+    backgroundColor: colors.bgAlt,
+    borderRadius: radius.m,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     paddingHorizontal: spacing.base,
+    height: 48,
   },
   plainInput: {
     flex: 1,
-    paddingVertical: spacing.m,
     paddingHorizontal: spacing.s,
+    paddingVertical: 0,
     ...typography.body,
-    color: colors.textPrimary,
+    fontSize: 14,
+    color: colors.text,
   },
+  hint: { ...typography.capsSm, color: colors.textDim },
 });

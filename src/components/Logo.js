@@ -1,41 +1,67 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, fonts } from '../theme';
 
-export default function Logo({ size = 96, showWordmark = true, wordmarkColor = colors.accent }) {
+// VOLT brand lockup. Mark + wordmark "VOL[T▪]" where the trailing "T" and the
+// square dot block are in accent. The mark itself is the angular V chevron —
+// two diagonal slashes with a smaller offset inner triangle for stepped depth.
+
+export function VoltMark({ size = 20, color = colors.accent }) {
   return (
-    <View style={styles.wrap}>
-      <View style={[styles.tile, { width: size, height: size, borderRadius: radius.l }]}>
-        <Svg width={size * 0.62} height={size * 0.62} viewBox="0 0 64 64">
-          <Path
-            d="M10 16 L32 56 L54 16 L44 16 L32 38 L20 16 Z"
-            fill="#FFFFFF"
+    <Svg width={size} height={size} viewBox="0 0 64 64">
+      {/* Outer chevron */}
+      <Path d="M4 8 L20 8 L32 38 L44 8 L60 8 L34 60 L30 60 Z" fill={color} />
+      {/* Inner offset triangle for stepped depth */}
+      <Path d="M22 18 L32 40 L42 18 Z" fill={color} opacity={0.55} />
+    </Svg>
+  );
+}
+
+export default function Logo({
+  size = 22,
+  showWordmark = true,
+  wordmarkColor = colors.text,
+  accentColor = colors.accent,
+  align = 'center',
+}) {
+  const markSize = Math.round(size * 0.95);
+  const wordSize = size;
+
+  return (
+    <View style={[styles.row, align === 'center' && styles.center]}>
+      <VoltMark size={markSize} color={accentColor} />
+      {showWordmark ? (
+        <View style={styles.wordmarkRow}>
+          <Text style={[styles.wordmark, { color: wordmarkColor, fontSize: wordSize }]}>VOL</Text>
+          <Text style={[styles.wordmark, { color: accentColor, fontSize: wordSize }]}>T</Text>
+          <View
+            style={[
+              styles.dot,
+              {
+                width: Math.round(wordSize * 0.36),
+                height: Math.round(wordSize * 0.36),
+                backgroundColor: accentColor,
+                marginLeft: Math.round(wordSize * 0.18),
+                marginBottom: Math.round(wordSize * 0.05),
+              },
+            ]}
           />
-          <Path d="M30 16 L34 16 L34 28 L30 28 Z" fill="#FFFFFF" />
-        </Svg>
-      </View>
-      {showWordmark && (
-        <Text style={[styles.wordmark, { color: wordmarkColor }]}>
-          <Text style={{ fontWeight: '600' }}>A</Text>dvent
-          <Text style={{ color: colors.textSecondary }}>Fitness</Text>
-        </Text>
-      )}
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center' },
-  tile: {
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  center: { justifyContent: 'center' },
+  wordmarkRow: { flexDirection: 'row', alignItems: 'flex-end', marginLeft: spacing.s },
   wordmark: {
-    marginTop: spacing.m,
-    fontSize: 22,
-    fontWeight: '300',
-    letterSpacing: 1,
+    fontFamily: fonts.sansMedium,
+    fontWeight: '700',
+    letterSpacing: -1,
+    includeFontPadding: false,
   },
+  dot: { borderRadius: 0 },
 });
