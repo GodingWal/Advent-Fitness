@@ -42,18 +42,18 @@ describe('pathDistanceMiles', () => {
 describe('applyPrivacyZone', () => {
   const zone = {
     enabled: true,
-    center: { latitude: 32.7480, longitude: -117.1492 },
+    center: { latitude: 32.748, longitude: -117.1492 },
     radiusMi: 0.15,
   };
 
   it('returns coords unchanged when zone disabled', () => {
-    const coords = [{ latitude: 32.7480, longitude: -117.1492 }];
+    const coords = [{ latitude: 32.748, longitude: -117.1492 }];
     expect(applyPrivacyZone(coords, { ...zone, enabled: false })).toBe(coords);
   });
 
   it('strips points inside the zone', () => {
-    const inside = { latitude: 32.7480, longitude: -117.1492 };
-    const outside = { latitude: 32.9000, longitude: -117.2000 };
+    const inside = { latitude: 32.748, longitude: -117.1492 };
+    const outside = { latitude: 32.9, longitude: -117.2 };
     const result = applyPrivacyZone([inside, outside], zone);
     expect(result).toHaveLength(1);
     expect(result[0]).toBe(outside);

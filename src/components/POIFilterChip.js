@@ -1,8 +1,9 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { colors, spacing, radius, typography, shadows } from '../theme';
+import { colors, spacing, radius, typography } from '../theme';
 
+// VOLT category chip — radius 2, Caps label, active = lime fill + dark text.
 export default function POIFilterChip({ label, icon, active, onPress }) {
   return (
     <TouchableOpacity
@@ -13,12 +14,12 @@ export default function POIFilterChip({ label, icon, active, onPress }) {
       {icon ? (
         <Ionicons
           name={icon}
-          size={16}
-          color={active ? colors.white : colors.accent}
+          size={13}
+          color={active ? '#0A0C10' : colors.textMute}
           style={styles.icon}
         />
       ) : null}
-      <Text style={[styles.label, active && styles.labelActive]}>{label}</Text>
+      <Text style={[styles.label, active && styles.labelActive]}>{label?.toUpperCase()}</Text>
     </TouchableOpacity>
   );
 }
@@ -27,15 +28,20 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.base,
-    paddingVertical: 10,
-    borderRadius: radius.pill,
+    paddingHorizontal: spacing.m,
+    paddingVertical: 8,
+    borderRadius: radius.s,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     backgroundColor: colors.surface,
     marginRight: spacing.s,
-    ...shadows.cardLight,
   },
-  chipActive: { backgroundColor: colors.accent },
+  chipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
   icon: { marginRight: 6 },
-  label: { ...typography.bodySmall, fontWeight: '500', color: colors.textPrimary },
-  labelActive: { color: colors.white },
+  label: {
+    ...typography.caps,
+    fontSize: 10,
+    color: colors.textMute,
+  },
+  labelActive: { color: '#0A0C10' },
 });

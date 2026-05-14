@@ -4,8 +4,9 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import HeaderBar from '../../components/HeaderBar';
 import POIMarker from '../../components/POIMarker';
+import { Caps, Mono } from '../../components/VoltPrimitives';
 import { useApp } from '../../state/AppContext';
-import { colors, spacing, radius, typography, shadows } from '../../theme';
+import { colors, spacing, radius, typography } from '../../theme';
 
 export default function MeetupDetailScreen({ navigation, route }) {
   const { meetupId } = route?.params || {};
@@ -15,31 +16,33 @@ export default function MeetupDetailScreen({ navigation, route }) {
   if (!meetup) {
     return (
       <View style={styles.container}>
-        <HeaderBar onBack={() => navigation.goBack()} title="Meetup" bordered />
+        <HeaderBar onBack={() => navigation.goBack()} title="MEETUP" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <HeaderBar onBack={() => navigation.goBack()} title="Meetup" bordered />
+      <HeaderBar onBack={() => navigation.goBack()} title="MEETUP" />
       <ScrollView contentContainerStyle={styles.scroll}>
         <Image source={{ uri: meetup.image }} style={styles.hero} />
         <View style={styles.body}>
+          <Caps size={10} color={colors.textMute}>
+            Hosted by {meetup.host}
+          </Caps>
           <Text style={styles.title}>{meetup.title}</Text>
-          <Text style={styles.host}>Hosted by {meetup.host}</Text>
 
           <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={18} color={colors.accent} />
+            <Ionicons name="calendar-outline" size={16} color={colors.accent} />
             <Text style={styles.infoText}>{meetup.when}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Ionicons name="location-outline" size={18} color={colors.accent} />
+            <Ionicons name="location-outline" size={16} color={colors.accent} />
             <Text style={styles.infoText}>{meetup.location}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Ionicons name="people-outline" size={18} color={colors.accent} />
-            <Text style={styles.infoText}>{meetup.attendees} going</Text>
+            <Ionicons name="people-outline" size={16} color={colors.accent} />
+            <Mono size={13}>{`${meetup.attendees} going`}</Mono>
           </View>
 
           <Text style={styles.about}>{meetup.description}</Text>
@@ -71,12 +74,10 @@ export default function MeetupDetailScreen({ navigation, route }) {
           >
             <Ionicons
               name={meetup.rsvped ? 'checkmark-circle' : 'add-circle-outline'}
-              size={20}
-              color={meetup.rsvped ? colors.white : colors.white}
+              size={18}
+              color="#0A0C10"
             />
-            <Text style={styles.ctaLabel}>
-              {meetup.rsvped ? "You're going" : 'RSVP'}
-            </Text>
+            <Text style={styles.ctaLabel}>{meetup.rsvped ? "YOU'RE GOING" : 'RSVP'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -85,17 +86,26 @@ export default function MeetupDetailScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surfaceMuted },
+  container: { flex: 1, backgroundColor: colors.bg },
   scroll: { paddingBottom: 80 },
   hero: { width: '100%', height: 220 },
-  body: { padding: spacing.base },
-  title: { ...typography.h2, color: colors.textPrimary, fontWeight: '400' },
-  host: { ...typography.body, color: colors.textSecondary, marginTop: 4 },
+  body: { padding: spacing.edge },
+  title: {
+    ...typography.h2,
+    color: colors.text,
+    marginTop: 4,
+  },
   infoRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.m },
-  infoText: { ...typography.body, color: colors.textPrimary, marginLeft: spacing.m },
+  infoText: {
+    ...typography.body,
+    fontSize: 14,
+    color: colors.text,
+    marginLeft: spacing.m,
+  },
   about: {
     ...typography.body,
-    color: colors.textSecondary,
+    fontSize: 14,
+    color: colors.textMute,
     marginTop: spacing.l,
     lineHeight: 22,
   },
@@ -104,7 +114,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.l,
     overflow: 'hidden',
     marginTop: spacing.l,
-    ...shadows.cardLight,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
   },
   cta: {
     flexDirection: 'row',
@@ -112,9 +123,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.accent,
     paddingVertical: spacing.base,
-    borderRadius: radius.pill,
+    borderRadius: radius.m,
     marginTop: spacing.l,
   },
-  ctaActive: { backgroundColor: '#2ECC71' },
-  ctaLabel: { ...typography.labelCaps, color: colors.white, marginLeft: spacing.s },
+  ctaActive: { backgroundColor: colors.accent3 },
+  ctaLabel: {
+    ...typography.caps,
+    fontSize: 12,
+    color: '#0A0C10',
+    fontWeight: '700',
+    marginLeft: spacing.s,
+  },
 });

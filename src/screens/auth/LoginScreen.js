@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HeaderBar from '../../components/HeaderBar';
 import PrimaryButton from '../../components/PrimaryButton';
+import { Caps } from '../../components/VoltPrimitives';
 import { useAuth } from '../../state/AuthContext';
 import { isValidEmail, isValidPassword } from '../../utils/validation';
 import { strings } from '../../i18n/strings';
@@ -35,7 +36,6 @@ export default function LoginScreen({ navigation }) {
     setSubmitting(true);
     try {
       await signIn({ email: email.trim() });
-      // RootNavigator switches to AppStack when auth state flips; no manual replace needed.
     } finally {
       setSubmitting(false);
     }
@@ -47,16 +47,20 @@ export default function LoginScreen({ navigation }) {
       style={styles.container}
     >
       <StatusBar barStyle="light-content" />
-      <HeaderBar
-        onBack={() => navigation.goBack()}
-        background={colors.bgDark}
-        iconColor={colors.white}
-      />
-      <View style={styles.body}>
-        <Text style={styles.title}>{strings.auth.welcomeBack}</Text>
-        <View style={styles.divider} />
+      <HeaderBar onBack={() => navigation.goBack()} title="LOG IN" />
 
-        <Text style={styles.label}>{strings.auth.emailLabel}</Text>
+      <View style={styles.body}>
+        <Caps size={10} color={colors.textMute}>
+          Account
+        </Caps>
+        <Text style={styles.title}>
+          Welcome{'\n'}
+          <Text style={{ color: colors.accent }}>back.</Text>
+        </Text>
+
+        <Caps size={9} color={colors.textMute} style={styles.label}>
+          {strings.auth.emailLabel}
+        </Caps>
         <TextInput
           style={[styles.input, errors.email && styles.inputError]}
           value={email}
@@ -65,13 +69,12 @@ export default function LoginScreen({ navigation }) {
             if (errors.email) setErrors((e) => ({ ...e, email: null }));
           }}
           placeholder={strings.auth.emailPlaceholder}
-          placeholderTextColor={colors.textOnDarkMuted}
+          placeholderTextColor={colors.textDim}
           autoCapitalize="none"
           autoComplete="email"
           textContentType="emailAddress"
           keyboardType="email-address"
           accessibilityLabel={strings.auth.emailLabel}
-          accessibilityHint="Enter the email address for your account"
           returnKeyType="next"
         />
         {errors.email ? (
@@ -80,7 +83,9 @@ export default function LoginScreen({ navigation }) {
           </Text>
         ) : null}
 
-        <Text style={[styles.label, { marginTop: spacing.l }]}>{strings.auth.passwordLabel}</Text>
+        <Caps size={9} color={colors.textMute} style={[styles.label, { marginTop: spacing.l }]}>
+          {strings.auth.passwordLabel}
+        </Caps>
         <TextInput
           style={[styles.input, errors.password && styles.inputError]}
           value={password}
@@ -89,12 +94,11 @@ export default function LoginScreen({ navigation }) {
             if (errors.password) setErrors((e) => ({ ...e, password: null }));
           }}
           placeholder={strings.auth.passwordPlaceholder}
-          placeholderTextColor={colors.textOnDarkMuted}
+          placeholderTextColor={colors.textDim}
           secureTextEntry
           autoComplete="password"
           textContentType="password"
           accessibilityLabel={strings.auth.passwordLabel}
-          accessibilityHint="At least 8 characters"
           returnKeyType="go"
           onSubmitEditing={handleSubmit}
         />
@@ -106,8 +110,8 @@ export default function LoginScreen({ navigation }) {
 
         <View style={[styles.cta, { marginBottom: insets.bottom + spacing.l }]}>
           <PrimaryButton
-            label={strings.auth.logIn}
-            trailingIcon="chevron-forward"
+            label="Sign in"
+            trailingIcon="arrow-forward"
             onPress={handleSubmit}
             disabled={submitting}
           />
@@ -118,31 +122,26 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgDark },
-  body: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: spacing.l },
-  title: { ...typography.h1, color: colors.textOnDark },
-  divider: {
-    width: 28,
-    height: 1,
-    backgroundColor: colors.textOnDark,
-    marginVertical: spacing.base,
-    opacity: 0.85,
+  container: { flex: 1, backgroundColor: colors.bg },
+  body: { flex: 1, paddingHorizontal: spacing.edge, paddingTop: spacing.l },
+  title: {
+    ...typography.h1,
+    fontSize: 38,
+    lineHeight: 40,
+    color: colors.text,
+    marginTop: spacing.s,
+    marginBottom: spacing.xl,
   },
-  label: { ...typography.labelCapsSmall, color: colors.textOnDarkMuted, marginTop: spacing.xl },
+  label: { marginBottom: spacing.s },
   input: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.4)',
+    borderBottomColor: colors.line,
     paddingVertical: spacing.m,
-    color: colors.white,
+    color: colors.text,
     ...typography.body,
+    fontSize: 15,
   },
-  inputError: {
-    borderBottomColor: colors.like,
-  },
-  errorText: {
-    ...typography.caption,
-    color: colors.like,
-    marginTop: spacing.xs,
-  },
+  inputError: { borderBottomColor: colors.accent2 },
+  errorText: { ...typography.mono, fontSize: 11, color: colors.accent2, marginTop: 4 },
   cta: { marginTop: 'auto' },
 });

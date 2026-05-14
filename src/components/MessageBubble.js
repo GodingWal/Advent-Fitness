@@ -1,23 +1,16 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
-import { colors, spacing, radius, typography, shadows } from '../theme';
+import { View, Text, StyleSheet } from 'react-native';
+import { colors, spacing, radius, typography } from '../theme';
 
-export default function MessageBubble({ message, avatar }) {
+// VOLT message bubble — sharp 4px radius (no rounded pillows), max-width 74%,
+// padding 10x14. Mine: accent bg + dark text. Theirs: surface + lineSoft border.
+export default function MessageBubble({ message }) {
   const fromMe = message.fromMe;
   return (
     <View style={[styles.row, fromMe ? styles.rowRight : styles.rowLeft]}>
-      {!fromMe && <Image source={{ uri: avatar }} style={styles.avatar} />}
-      <View
-        style={[
-          styles.bubble,
-          fromMe ? styles.bubbleMe : styles.bubbleThem,
-        ]}
-      >
-        <Text style={[styles.text, fromMe ? styles.textMe : styles.textThem]}>
-          {message.text}
-        </Text>
+      <View style={[styles.bubble, fromMe ? styles.bubbleMe : styles.bubbleThem]}>
+        <Text style={[styles.text, fromMe ? styles.textMe : styles.textThem]}>{message.text}</Text>
       </View>
-      {fromMe && <Image source={{ uri: avatar }} style={styles.avatar} />}
     </View>
   );
 }
@@ -25,23 +18,24 @@ export default function MessageBubble({ message, avatar }) {
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    marginVertical: spacing.s,
-    paddingHorizontal: spacing.base,
+    marginVertical: 4,
+    paddingHorizontal: spacing.edge,
   },
   rowLeft: { justifyContent: 'flex-start' },
   rowRight: { justifyContent: 'flex-end' },
-  avatar: { width: 32, height: 32, borderRadius: 16, marginHorizontal: spacing.s },
   bubble: {
-    maxWidth: '70%',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.m,
-    borderRadius: radius.xl,
-    ...shadows.cardLight,
+    maxWidth: '74%',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: radius.m,
   },
-  bubbleMe: { backgroundColor: colors.accent, borderBottomRightRadius: 6 },
-  bubbleThem: { backgroundColor: colors.surface, borderBottomLeftRadius: 6 },
-  text: { ...typography.body },
-  textMe: { color: colors.white },
-  textThem: { color: colors.textPrimary },
+  bubbleMe: { backgroundColor: colors.accent },
+  bubbleThem: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
+  },
+  text: { ...typography.body, fontSize: 14, lineHeight: 20 },
+  textMe: { color: '#0A0C10' },
+  textThem: { color: colors.text },
 });

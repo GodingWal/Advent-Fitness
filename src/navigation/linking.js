@@ -1,7 +1,7 @@
 import * as Linking from 'expo-linking';
 
 export const linking = {
-  prefixes: [Linking.createURL('/'), 'adventfitness://', 'https://adventfitness.app'],
+  prefixes: [Linking.createURL('/'), 'volt://', 'https://volt.app'],
   config: {
     screens: {
       Splash: 'welcome',

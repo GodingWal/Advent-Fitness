@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import HeaderBar from '../../components/HeaderBar';
 import PrimaryButton from '../../components/PrimaryButton';
+import { Caps, Mono } from '../../components/VoltPrimitives';
 import { useApp } from '../../state/AppContext';
-import { colors, spacing, radius, typography, shadows } from '../../theme';
+import { colors, spacing, radius, typography } from '../../theme';
 
 const SUGGESTED = [
   'Bench Press',
@@ -16,7 +17,11 @@ const SUGGESTED = [
   'Lunges',
 ];
 
-const emptySet = () => ({ id: `s_${Math.random().toString(36).slice(2, 8)}`, reps: '', weight: '' });
+const emptySet = () => ({
+  id: `s_${Math.random().toString(36).slice(2, 8)}`,
+  reps: '',
+  weight: '',
+});
 const emptyExercise = () => ({
   id: `e_${Math.random().toString(36).slice(2, 8)}`,
   name: '',
@@ -47,9 +52,7 @@ export default function IndoorWorkoutScreen({ navigation }) {
 
   const removeSet = (eid, sid) =>
     setExercises((cur) =>
-      cur.map((e) =>
-        e.id === eid ? { ...e, sets: e.sets.filter((s) => s.id !== sid) } : e
-      )
+      cur.map((e) => (e.id === eid ? { ...e, sets: e.sets.filter((s) => s.id !== sid) } : e))
     );
 
   const addExercise = () => setExercises((cur) => [...cur, emptyExercise()]);
@@ -96,65 +99,77 @@ export default function IndoorWorkoutScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <HeaderBar onBack={() => navigation.goBack()} title="Indoor Workout" bordered />
+      <HeaderBar onBack={() => navigation.goBack()} title="STRENGTH" />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.summaryCard}>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{exercises.filter((e) => e.name).length}</Text>
-            <Text style={styles.summaryLabel}>EXERCISES</Text>
-          </View>
+          <SummaryStat label="Exercises" value={exercises.filter((e) => e.name).length} />
           <View style={styles.summaryDivider} />
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{totalSets}</Text>
-            <Text style={styles.summaryLabel}>SETS</Text>
-          </View>
+          <SummaryStat label="Sets" value={totalSets} />
           <View style={styles.summaryDivider} />
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{totalVolume.toLocaleString()}</Text>
-            <Text style={styles.summaryLabel}>VOLUME</Text>
-          </View>
+          <SummaryStat label="Volume" value={totalVolume.toLocaleString()} />
         </View>
 
         {exercises.map((e, idx) => (
           <View key={e.id} style={styles.exerciseCard}>
-            <Text style={styles.exerciseLabel}>EXERCISE {idx + 1}</Text>
+            <Caps size={9} color={colors.textMute}>
+              Exercise {idx + 1}
+            </Caps>
             <TextInput
               value={e.name}
               onChangeText={(t) => updateExercise(e.id, { name: t })}
               style={styles.exerciseInput}
               placeholder="Search or type exercise"
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={colors.textDim}
             />
             {!e.name ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestRow}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.suggestRow}
+              >
                 {SUGGESTED.map((s) => (
                   <TouchableOpacity
                     key={s}
                     onPress={() => updateExercise(e.id, { name: s })}
                     style={styles.suggestChip}
                   >
-                    <Text style={styles.suggestText}>{s}</Text>
+                    <Caps size={9} color={colors.textMute}>
+                      {s}
+                    </Caps>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
             ) : null}
 
             <View style={styles.setsHeader}>
-              <Text style={[styles.setHeaderCell, { flex: 0.6 }]}>SET</Text>
-              <Text style={styles.setHeaderCell}>REPS</Text>
-              <Text style={styles.setHeaderCell}>WEIGHT (LB)</Text>
+              <Caps size={9} color={colors.textMute} style={{ flex: 0.6 }}>
+                Set
+              </Caps>
+              <Caps size={9} color={colors.textMute} style={styles.setHeaderCell}>
+                Reps
+              </Caps>
+              <Caps size={9} color={colors.textMute} style={styles.setHeaderCell}>
+                Weight (lb)
+              </Caps>
               <View style={{ width: 36 }} />
             </View>
 
             {e.sets.map((s, sidx) => (
               <View key={s.id} style={styles.setRow}>
-                <Text style={[styles.setIndex, { flex: 0.6 }]}>{sidx + 1}</Text>
+                <Mono
+                  size={13}
+                  color={colors.text}
+                  weight="600"
+                  style={{ flex: 0.6, textAlign: 'center' }}
+                >
+                  {sidx + 1}
+                </Mono>
                 <TextInput
                   value={s.reps}
                   onChangeText={(t) => updateSet(e.id, s.id, { reps: t })}
                   style={styles.setInput}
                   placeholder="0"
-                  placeholderTextColor={colors.textMuted}
+                  placeholderTextColor={colors.textDim}
                   keyboardType="number-pad"
                 />
                 <TextInput
@@ -162,7 +177,7 @@ export default function IndoorWorkoutScreen({ navigation }) {
                   onChangeText={(t) => updateSet(e.id, s.id, { weight: t })}
                   style={styles.setInput}
                   placeholder="0"
-                  placeholderTextColor={colors.textMuted}
+                  placeholderTextColor={colors.textDim}
                   keyboardType="number-pad"
                 />
                 <TouchableOpacity
@@ -170,21 +185,25 @@ export default function IndoorWorkoutScreen({ navigation }) {
                   style={styles.removeBtn}
                   hitSlop={8}
                 >
-                  <Ionicons name="close" size={18} color={colors.textMuted} />
+                  <Ionicons name="close" size={16} color={colors.textMute} />
                 </TouchableOpacity>
               </View>
             ))}
 
             <TouchableOpacity onPress={() => addSet(e.id)} style={styles.addSet}>
-              <Ionicons name="add" size={18} color={colors.accent} />
-              <Text style={styles.addSetLabel}>Add Set</Text>
+              <Ionicons name="add" size={14} color={colors.accent} />
+              <Caps size={9} color={colors.accent} style={{ marginLeft: 6 }}>
+                Add Set
+              </Caps>
             </TouchableOpacity>
           </View>
         ))}
 
         <TouchableOpacity onPress={addExercise} style={styles.addExercise}>
-          <Ionicons name="add-circle-outline" size={20} color={colors.accent} />
-          <Text style={styles.addExerciseLabel}>Add Exercise</Text>
+          <Ionicons name="add-circle-outline" size={18} color={colors.text} />
+          <Caps size={11} color={colors.text} style={{ marginLeft: 8 }}>
+            Add Exercise
+          </Caps>
         </TouchableOpacity>
 
         <TextInput
@@ -192,101 +211,110 @@ export default function IndoorWorkoutScreen({ navigation }) {
           onChangeText={setNotes}
           style={styles.notes}
           placeholder="Notes (gym, mood, etc.)"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={colors.textDim}
           multiline
         />
 
         <View style={{ marginTop: spacing.l }}>
-          <PrimaryButton
-            label="Finish & Save"
-            onPress={save}
-            style={{ backgroundColor: colors.accent }}
-            textStyle={{ color: colors.white }}
-          />
+          <PrimaryButton label="Finish & Save" trailingIcon="checkmark" onPress={save} />
         </View>
       </ScrollView>
     </View>
   );
 }
 
+function SummaryStat({ label, value }) {
+  return (
+    <View style={styles.summaryItem}>
+      <Caps size={9} color={colors.textMute}>
+        {label}
+      </Caps>
+      <Mono size={22} color={colors.text} weight="500" style={{ marginTop: 4 }}>
+        {String(value)}
+      </Mono>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surfaceMuted },
-  scroll: { padding: spacing.base, paddingBottom: 80 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  scroll: { padding: spacing.edge, paddingBottom: 120 },
   summaryCard: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
-    borderRadius: radius.l,
-    padding: spacing.l,
-    ...shadows.cardLight,
-  },
-  summaryItem: { flex: 1, alignItems: 'center' },
-  summaryValue: { fontSize: 22, color: colors.textPrimary, fontWeight: '500' },
-  summaryLabel: { ...typography.labelCapsSmall, color: colors.textMuted, marginTop: 4 },
-  summaryDivider: { width: 1, backgroundColor: colors.divider },
-  exerciseCard: {
-    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     borderRadius: radius.l,
     padding: spacing.base,
-    marginTop: spacing.base,
-    ...shadows.cardLight,
   },
-  exerciseLabel: { ...typography.labelCapsSmall, color: colors.textMuted },
+  summaryItem: { flex: 1, alignItems: 'center' },
+  summaryDivider: { width: 1, backgroundColor: colors.lineSoft },
+  exerciseCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
+    borderRadius: radius.l,
+    padding: spacing.base,
+    marginTop: spacing.m,
+  },
   exerciseInput: {
-    ...typography.h3,
-    color: colors.textPrimary,
-    fontWeight: '400',
+    ...typography.body,
+    fontSize: 16,
+    color: colors.text,
     paddingVertical: spacing.s,
+    marginTop: 4,
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    borderBottomColor: colors.lineSoft,
   },
   suggestRow: { paddingVertical: spacing.s },
   suggestChip: {
     paddingHorizontal: spacing.m,
     paddingVertical: 6,
-    borderRadius: radius.pill,
+    borderRadius: radius.s,
     borderWidth: 1,
-    borderColor: colors.divider,
+    borderColor: colors.lineSoft,
     marginRight: spacing.s,
   },
-  suggestText: { ...typography.bodySmall, color: colors.textSecondary },
   setsHeader: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.base },
-  setHeaderCell: { flex: 1, ...typography.labelCapsSmall, color: colors.textMuted, textAlign: 'center' },
+  setHeaderCell: { flex: 1, textAlign: 'center' },
   setRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6 },
-  setIndex: { ...typography.body, color: colors.textPrimary, textAlign: 'center', fontWeight: '500' },
   setInput: {
     flex: 1,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     borderRadius: radius.s,
     paddingVertical: spacing.s,
     marginHorizontal: 4,
     textAlign: 'center',
-    ...typography.body,
-    color: colors.textPrimary,
+    ...typography.mono,
+    fontSize: 13,
+    color: colors.text,
   },
   removeBtn: { width: 36, alignItems: 'center' },
-  addSet: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.s, marginTop: spacing.s },
-  addSetLabel: { ...typography.labelCapsSmall, color: colors.accent, marginLeft: 6 },
+  addSet: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.s },
   addExercise: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.base,
-    borderRadius: radius.pill,
+    borderRadius: radius.m,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colors.divider,
-    marginTop: spacing.l,
+    borderColor: colors.line,
+    marginTop: spacing.m,
   },
-  addExerciseLabel: { ...typography.labelCaps, color: colors.accent, marginLeft: 6 },
   notes: {
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     borderRadius: radius.l,
     padding: spacing.base,
     marginTop: spacing.l,
     minHeight: 80,
     textAlignVertical: 'top',
-    color: colors.textPrimary,
+    color: colors.text,
     ...typography.body,
-    ...shadows.cardLight,
+    fontSize: 14,
   },
 });

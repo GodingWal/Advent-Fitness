@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, TextInput, StyleSheet, ScrollView, Image } from 'react-native';
 import HeaderBar from '../../components/HeaderBar';
 import PrimaryButton from '../../components/PrimaryButton';
+import { Caps } from '../../components/VoltPrimitives';
 import { mockUser } from '../../data/mockUser';
 import { colors, spacing, typography, radius } from '../../theme';
 
@@ -12,29 +13,51 @@ export default function EditProfileScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <HeaderBar onBack={() => navigation.goBack()} title="Edit Profile" bordered />
+      <HeaderBar onBack={() => navigation.goBack()} title="EDIT PROFILE" />
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.avatarWrap}>
           <Image source={{ uri: mockUser.avatar }} style={styles.avatar} />
-          <Text style={styles.changePhoto}>Change Photo</Text>
+          <Caps size={10} color={colors.accent} style={{ marginTop: spacing.s }}>
+            Change Photo
+          </Caps>
         </View>
-        <Text style={styles.label}>NAME</Text>
-        <TextInput style={styles.input} value={name} onChangeText={setName} />
-        <Text style={styles.label}>LOCATION</Text>
-        <TextInput style={styles.input} value={location} onChangeText={setLocation} />
-        <Text style={styles.label}>BIO</Text>
+
+        <Caps size={9} color={colors.textMute} style={styles.label}>
+          Name
+        </Caps>
+        <TextInput
+          style={styles.input}
+          value={name}
+          onChangeText={setName}
+          placeholderTextColor={colors.textDim}
+        />
+
+        <Caps size={9} color={colors.textMute} style={styles.label}>
+          Location
+        </Caps>
+        <TextInput
+          style={styles.input}
+          value={location}
+          onChangeText={setLocation}
+          placeholderTextColor={colors.textDim}
+        />
+
+        <Caps size={9} color={colors.textMute} style={styles.label}>
+          Bio
+        </Caps>
         <TextInput
           style={[styles.input, styles.multiline]}
           value={bio}
           onChangeText={setBio}
           multiline
+          placeholderTextColor={colors.textDim}
         />
+
         <View style={{ marginTop: spacing.xl }}>
           <PrimaryButton
             label="Save Changes"
+            trailingIcon="checkmark"
             onPress={() => navigation.goBack()}
-            style={{ backgroundColor: colors.accent }}
-            textStyle={{ color: colors.white }}
           />
         </View>
       </ScrollView>
@@ -43,18 +66,18 @@ export default function EditProfileScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface },
-  scroll: { padding: spacing.base, paddingBottom: 120 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  scroll: { padding: spacing.edge, paddingBottom: 120 },
   avatarWrap: { alignItems: 'center', marginVertical: spacing.l },
-  avatar: { width: 100, height: 100, borderRadius: 50 },
-  changePhoto: { ...typography.labelCapsSmall, color: colors.accent, marginTop: spacing.s },
-  label: { ...typography.labelCapsSmall, color: colors.textSecondary, marginTop: spacing.l },
+  avatar: { width: 90, height: 90, borderRadius: radius.s },
+  label: { marginTop: spacing.l, marginBottom: spacing.xs },
   input: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    borderBottomColor: colors.line,
     paddingVertical: spacing.m,
-    color: colors.textPrimary,
+    color: colors.text,
     ...typography.body,
+    fontSize: 15,
   },
   multiline: { minHeight: 80, textAlignVertical: 'top' },
 });

@@ -41,7 +41,12 @@ export const conversations = [
 export const sampleThread = [
   { id: 'm1', fromMe: false, text: 'Hey, what time are we going surfing?', time: '10:32 AM' },
   { id: 'm2', fromMe: true, text: 'Hmm..maybe do a sunset session?', time: '10:42 AM' },
-  { id: 'm3', fromMe: true, text: 'Or if you want, we can paddle out in the morning to start the day off with some exercise!', time: '10:45 AM' },
+  {
+    id: 'm3',
+    fromMe: true,
+    text: 'Or if you want, we can paddle out in the morning to start the day off with some exercise!',
+    time: '10:45 AM',
+  },
   { id: 'm4', fromMe: false, text: 'So down!', time: '10:53 AM' },
   { id: 'm5', fromMe: false, text: 'Let’s go to Sunset Cliffs this time tho.', time: '11:12 AM' },
 ];

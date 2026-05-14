@@ -1,6 +1,8 @@
-# AdventFitness
+# VOLT
 
-A React Native + Expo fitness app for discovering trails, gyms, courts, and meetups, and tracking outdoor activities.
+> **Move with intent.**
+
+A React Native + Expo fitness tracking app with a dark-first, performance-grade aesthetic. Log activities, see live stats and streaks, follow friends, message them, and discover spots and programs.
 
 ## Stack
 
@@ -19,6 +21,14 @@ npm run ios            # iOS simulator
 npm run android        # Android emulator
 npm run web            # Web preview
 ```
+
+## Brand
+
+- **Name:** VOLT
+- **Tagline:** "Move with intent."
+- **Default palette:** Voltage (electric lime on near-black). 4 palettes ship: Voltage, Magma, Subzero, Paper. See `src/theme/colors.js`.
+- **Typography:** Space Grotesk (display / body) + JetBrains Mono (numbers, labels, deltas). System fallbacks until web fonts ship.
+- **Radii:** never exceed 8px — sharp corners are the brand.
 
 ## Environment
 
@@ -48,22 +58,22 @@ For native map keys, set them in `app.json` (`ios.config.googleMapsApiKey`, `and
 
 ```
 src/
-  components/       Reusable UI primitives
+  components/       Reusable UI primitives (BrandStrip, Caps, Mono, etc.)
   data/             Mock seed data (replace with API client)
   i18n/             Centralized user-facing strings
   navigation/       Stack / Drawer / Tab definitions + linking
   screens/          Screen-level components
   services/         Network and device access (location, places, http)
   state/            React Context providers (auth, app data)
-  theme/            Colors, spacing, typography, shadows
+  theme/            Colors, spacing, typography, shadows + 4 palettes
 ```
 
 ## Deep linking
 
-URL scheme: `adventfitness://`. See `src/navigation/linking.js` for the route map. Examples:
+URL scheme: `volt://`. See `src/navigation/linking.js` for the route map. Examples:
 
-- `adventfitness://meetup/m1` opens MeetupDetail
-- `adventfitness://activity/route1` opens ActivitySummary
+- `volt://meetup/m1` opens MeetupDetail
+- `volt://activity/route1` opens ActivitySummary
 
 ## Testing
 

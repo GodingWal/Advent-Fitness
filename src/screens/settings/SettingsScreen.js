@@ -4,7 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import HeaderBar from '../../components/HeaderBar';
 import { useApp } from '../../state/AppContext';
 import { useAuth } from '../../state/AuthContext';
-import { colors, spacing, radius, typography, shadows } from '../../theme';
+import { colors, spacing, radius, typography } from '../../theme';
 
 export default function SettingsScreen({ navigation }) {
   const { settings, updateSetting, updatePrivacyZone } = useApp();
@@ -19,7 +19,7 @@ export default function SettingsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <HeaderBar onBack={() => navigation.goBack()} title="Settings" bordered />
+      <HeaderBar onBack={() => navigation.goBack()} title="SETTINGS" />
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.section}>NOTIFICATIONS</Text>
         <Toggle
@@ -116,19 +116,26 @@ function Row({ icon, title, onPress }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surfaceMuted },
-  scroll: { padding: spacing.base, paddingBottom: 80 },
-  section: { ...typography.labelCapsSmall, color: colors.textSecondary, marginTop: spacing.l, marginBottom: spacing.s },
+  container: { flex: 1, backgroundColor: colors.bg },
+  scroll: { padding: spacing.edge, paddingBottom: 80 },
+  section: {
+    ...typography.caps,
+    fontSize: 10,
+    color: colors.textMute,
+    marginTop: spacing.l,
+    marginBottom: spacing.s,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     borderRadius: radius.l,
     padding: spacing.base,
     marginBottom: spacing.s,
-    ...shadows.cardLight,
   },
   rowBody: { flex: 1, marginLeft: spacing.m },
-  rowTitle: { ...typography.body, color: colors.textPrimary, fontWeight: '500' },
-  rowSub: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+  rowTitle: { ...typography.body, fontSize: 14, color: colors.text, fontWeight: '500' },
+  rowSub: { ...typography.bodySmall, fontSize: 12, color: colors.textMute, marginTop: 2 },
 });

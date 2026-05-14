@@ -20,7 +20,7 @@ export default function POIMarker({ category }) {
   return (
     <View style={styles.wrap}>
       <View style={styles.bubble}>
-        <Ionicons name={icon} size={18} color={colors.white} />
+        <Ionicons name={icon} size={16} color="#0A0C10" />
       </View>
       <View style={styles.tail} />
     </View>
@@ -30,22 +30,22 @@ export default function POIMarker({ category }) {
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center' },
   bubble: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 4,
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.white,
+    borderWidth: 1,
+    borderColor: '#0A0C10',
   },
   tail: {
     width: 0,
     height: 0,
-    marginTop: -2,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 8,
+    marginTop: -1,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderTopWidth: 7,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderTopColor: colors.accent,

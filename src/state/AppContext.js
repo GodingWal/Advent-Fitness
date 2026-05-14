@@ -37,13 +37,61 @@ const SEED_RECORDED_ROUTES = [
 ];
 
 const SEED_ACHIEVEMENTS = [
-  { id: 'ach1', title: 'First Activity', description: 'Logged your first activity.', icon: 'trophy', earned: true, earnedDate: '2 weeks ago' },
-  { id: 'ach2', title: '5 Surf Sessions', description: 'Completed 5 surf sessions.', icon: 'water', earned: true, earnedDate: '1 week ago' },
-  { id: 'ach3', title: 'Trailblazer', description: 'Hiked 25 miles total.', icon: 'trail-sign', earned: true, earnedDate: '3 days ago' },
-  { id: 'ach4', title: '7-Day Streak', description: 'Stay active 7 days in a row.', icon: 'flame', earned: true, earnedDate: 'Today' },
-  { id: 'ach5', title: '30-Day Streak', description: 'Stay active 30 days in a row.', icon: 'flame', earned: false },
-  { id: 'ach6', title: 'Mountain Climber', description: 'Gain 10,000 ft of elevation.', icon: 'triangle', earned: false, progress: 0.62 },
-  { id: 'ach7', title: 'Century Ride', description: 'Cycle 100 miles in one ride.', icon: 'bicycle', earned: false, progress: 0.08 },
+  {
+    id: 'ach1',
+    title: 'First Activity',
+    description: 'Logged your first activity.',
+    icon: 'trophy',
+    earned: true,
+    earnedDate: '2 weeks ago',
+  },
+  {
+    id: 'ach2',
+    title: '5 Surf Sessions',
+    description: 'Completed 5 surf sessions.',
+    icon: 'water',
+    earned: true,
+    earnedDate: '1 week ago',
+  },
+  {
+    id: 'ach3',
+    title: 'Trailblazer',
+    description: 'Hiked 25 miles total.',
+    icon: 'trail-sign',
+    earned: true,
+    earnedDate: '3 days ago',
+  },
+  {
+    id: 'ach4',
+    title: '7-Day Streak',
+    description: 'Stay active 7 days in a row.',
+    icon: 'flame',
+    earned: true,
+    earnedDate: 'Today',
+  },
+  {
+    id: 'ach5',
+    title: '30-Day Streak',
+    description: 'Stay active 30 days in a row.',
+    icon: 'flame',
+    earned: false,
+  },
+  {
+    id: 'ach6',
+    title: 'Mountain Climber',
+    description: 'Gain 10,000 ft of elevation.',
+    icon: 'triangle',
+    earned: false,
+    progress: 0.62,
+  },
+  {
+    id: 'ach7',
+    title: 'Century Ride',
+    description: 'Cycle 100 miles in one ride.',
+    icon: 'bicycle',
+    earned: false,
+    progress: 0.08,
+  },
 ];
 
 const SEED_MEETUPS = [
@@ -128,9 +176,7 @@ export function AppProvider({ children }) {
   const toggleRsvp = useCallback((id) => {
     setMeetups((cur) =>
       cur.map((m) =>
-        m.id === id
-          ? { ...m, rsvped: !m.rsvped, attendees: m.attendees + (m.rsvped ? -1 : 1) }
-          : m
+        m.id === id ? { ...m, rsvped: !m.rsvped, attendees: m.attendees + (m.rsvped ? -1 : 1) } : m
       )
     );
   }, []);

@@ -1,16 +1,23 @@
 import React from 'react';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { colors, spacing, radius, typography, shadows } from '../theme';
+import { colors, spacing, radius, typography } from '../theme';
 
+// VOLT PrimaryButton — accent bg, dark text, sharp 4px radius, 56h.
 export default function PrimaryButton({
   label,
   onPress,
   trailingIcon,
+  leadingIcon,
   style,
   textStyle,
   disabled = false,
+  variant = 'primary',
 }) {
+  const isPrimary = variant === 'primary';
+  const bg = isPrimary ? colors.accent : colors.accent2;
+  const fg = '#0A0C10';
+
   return (
     <TouchableOpacity
       activeOpacity={0.85}
@@ -19,17 +26,15 @@ export default function PrimaryButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
-      style={[styles.btn, disabled && styles.disabled, style]}
+      style={[styles.btn, { backgroundColor: bg }, disabled && styles.disabled, style]}
     >
       <View style={styles.row}>
-        <Text style={[styles.label, textStyle]}>{label}</Text>
+        {leadingIcon ? (
+          <Ionicons name={leadingIcon} size={18} color={fg} style={styles.lead} />
+        ) : null}
+        <Text style={[styles.label, { color: fg }, textStyle]}>{label}</Text>
         {trailingIcon ? (
-          <Ionicons
-            name={trailingIcon}
-            size={18}
-            color={colors.textPrimary}
-            style={styles.trail}
-          />
+          <Ionicons name={trailingIcon} size={18} color={fg} style={styles.trail} />
         ) : null}
       </View>
     </TouchableOpacity>
@@ -38,19 +43,21 @@ export default function PrimaryButton({
 
 const styles = StyleSheet.create({
   btn: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.pill,
-    paddingVertical: 16,
+    borderRadius: radius.m,
+    height: 56,
     paddingHorizontal: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.cardLight,
   },
   row: { flexDirection: 'row', alignItems: 'center' },
   label: {
-    ...typography.labelCaps,
-    color: colors.textPrimary,
+    fontFamily: typography.body.fontFamily,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
   },
+  lead: { marginRight: spacing.s },
   trail: { marginLeft: spacing.s },
-  disabled: { opacity: 0.5 },
+  disabled: { opacity: 0.4 },
 });

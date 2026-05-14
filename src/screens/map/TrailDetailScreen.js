@@ -7,7 +7,7 @@ import ElevationChart from '../../components/ElevationChart';
 import POIMarker from '../../components/POIMarker';
 import { useApp } from '../../state/AppContext';
 import { friends } from '../../data/mockFriends';
-import { colors, spacing, radius, typography, shadows } from '../../theme';
+import { colors, spacing, radius, typography } from '../../theme';
 
 const ELEVATION_PROFILES = {
   trails: [120, 140, 220, 280, 340, 410, 380, 290, 240, 320, 380, 300, 220, 180, 150],
@@ -22,7 +22,10 @@ const ELEVATION_PROFILES = {
 
 const META_BY_CATEGORY = {
   trails: { lengthMi: 3.4, difficulty: 'Moderate', surface: 'Dirt + sand', elevationGainFt: 410 },
-  gyms: { hours: 'Mon–Fri 5am–11pm · Sat–Sun 7am–9pm', amenities: 'Free weights · Cardio · Showers' },
+  gyms: {
+    hours: 'Mon–Fri 5am–11pm · Sat–Sun 7am–9pm',
+    amenities: 'Free weights · Cardio · Showers',
+  },
   basketball: { courts: 4, surface: 'Asphalt', lights: 'Yes' },
   tennis: { courts: 6, surface: 'Hard', lights: 'Yes' },
   pickleball: { courts: 8, surface: 'Hard', lights: 'Yes' },
@@ -40,7 +43,7 @@ export default function TrailDetailScreen({ navigation, route }) {
   if (!poi) {
     return (
       <View style={styles.container}>
-        <HeaderBar onBack={() => navigation.goBack()} title="Details" bordered />
+        <HeaderBar onBack={() => navigation.goBack()} title="DETAILS" />
       </View>
     );
   }
@@ -58,10 +61,9 @@ export default function TrailDetailScreen({ navigation, route }) {
     <View style={styles.container}>
       <HeaderBar
         onBack={() => navigation.goBack()}
-        title="Details"
+        title="DETAILS"
         rightIcon={saved ? 'heart' : 'heart-outline'}
         onRight={() => toggleSpot(poi)}
-        bordered
       />
       <ScrollView contentContainerStyle={styles.scroll}>
         {poi.photo ? <Image source={{ uri: poi.photo }} style={styles.hero} /> : null}
@@ -84,7 +86,7 @@ export default function TrailDetailScreen({ navigation, route }) {
               </View>
             ) : null}
             {poi.userSubmitted ? (
-              <View style={[styles.metaPill, { backgroundColor: '#EEF3FA' }]}>
+              <View style={[styles.metaPill, { borderColor: colors.accent }]}>
                 <Ionicons name="person-add-outline" size={13} color={colors.accent} />
                 <Text style={[styles.metaPillText, { color: colors.accent }]}>Community</Text>
               </View>
@@ -128,7 +130,7 @@ export default function TrailDetailScreen({ navigation, route }) {
             </MapView>
           </View>
 
-          <Text style={styles.sectionTitle}>Friends who've been here</Text>
+          <Text style={styles.sectionTitle}>{`Friends who've been here`}</Text>
           <View style={styles.friendsRow}>
             {RECENT_FRIENDS.map((f) => (
               <View key={f.id} style={styles.friend}>
@@ -151,11 +153,11 @@ export default function TrailDetailScreen({ navigation, route }) {
                 })
               }
             >
-              <Ionicons name="play" size={18} color={colors.white} />
+              <Ionicons name="play" size={16} color="#0A0C10" />
               <Text style={styles.primaryLabel}>Start Activity</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionBtn} onPress={openDirections}>
-              <Ionicons name="navigate-outline" size={18} color={colors.accent} />
+              <Ionicons name="navigate-outline" size={16} color={colors.text} />
               <Text style={styles.actionLabel}>Directions</Text>
             </TouchableOpacity>
           </View>
@@ -174,73 +176,98 @@ function prettyKey(k) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surfaceMuted },
+  container: { flex: 1, backgroundColor: colors.bg },
   scroll: { paddingBottom: 80 },
   hero: { width: '100%', height: 220 },
-  body: { padding: spacing.base },
-  name: { ...typography.h2, color: colors.textPrimary, fontWeight: '400' },
-  address: { ...typography.body, color: colors.textSecondary, marginTop: 2 },
+  body: { padding: spacing.edge },
+  name: { ...typography.h2, color: colors.text },
+  address: { ...typography.body, fontSize: 13, color: colors.textMute, marginTop: 2 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.m },
   metaPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: radius.pill,
+    borderRadius: radius.s,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     paddingHorizontal: spacing.m,
     paddingVertical: 6,
     marginRight: spacing.s,
     marginTop: spacing.s,
-    ...shadows.cardLight,
   },
-  metaPillText: { ...typography.bodySmall, color: colors.textPrimary, marginLeft: 4 },
+  metaPillText: {
+    ...typography.mono,
+    fontSize: 11,
+    color: colors.text,
+    marginLeft: 4,
+  },
   statsCard: {
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     borderRadius: radius.l,
     padding: spacing.base,
     marginTop: spacing.l,
-    ...shadows.cardLight,
   },
   statRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: spacing.s,
     borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    borderBottomColor: colors.lineSoft,
   },
-  statKey: { ...typography.bodySmall, color: colors.textSecondary },
-  statVal: { ...typography.bodySmall, color: colors.textPrimary, fontWeight: '500' },
+  statKey: { ...typography.bodySmall, fontSize: 12, color: colors.textMute },
+  statVal: {
+    ...typography.mono,
+    fontSize: 12,
+    color: colors.text,
+    fontWeight: '500',
+  },
   section: {
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     borderRadius: radius.l,
     padding: spacing.base,
     marginTop: spacing.l,
-    ...shadows.cardLight,
   },
   mapCard: {
     height: 160,
     borderRadius: radius.l,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
     marginTop: spacing.l,
-    ...shadows.cardLight,
   },
-  sectionTitle: { ...typography.h3, color: colors.textPrimary, fontWeight: '400', marginTop: spacing.l },
+  sectionTitle: {
+    ...typography.title,
+    fontSize: 18,
+    color: colors.text,
+    marginTop: spacing.l,
+  },
   friendsRow: { flexDirection: 'row', marginTop: spacing.m },
   friend: { alignItems: 'center', marginRight: spacing.l },
-  friendAvatar: { width: 56, height: 56, borderRadius: 28 },
-  friendName: { ...typography.caption, color: colors.textSecondary, marginTop: 4 },
+  friendAvatar: { width: 48, height: 48, borderRadius: radius.s },
+  friendName: { ...typography.mono, fontSize: 10, color: colors.textMute, marginTop: 4 },
   actions: { flexDirection: 'row', marginTop: spacing.l },
   actionBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.m,
-    borderRadius: radius.pill,
+    height: 48,
+    borderRadius: radius.m,
     borderWidth: 1,
-    borderColor: colors.divider,
+    borderColor: colors.line,
     marginHorizontal: 4,
   },
   primary: { backgroundColor: colors.accent, borderColor: colors.accent },
-  primaryLabel: { ...typography.labelCaps, color: colors.white, marginLeft: 6 },
-  actionLabel: { ...typography.labelCaps, color: colors.accent, marginLeft: 6 },
+  primaryLabel: {
+    ...typography.caps,
+    fontSize: 12,
+    color: '#0A0C10',
+    fontWeight: '700',
+    marginLeft: 6,
+  },
+  actionLabel: { ...typography.caps, fontSize: 12, color: colors.text, marginLeft: 6 },
 });

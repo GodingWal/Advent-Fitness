@@ -16,8 +16,7 @@ export default function ElevationChart({ profile, width = 320, height = 120 }) {
     return [x, y];
   });
 
-  const linePath =
-    'M' + points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' L');
+  const linePath = 'M' + points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' L');
   const fillPath = `${linePath} L${width},${height} L0,${height} Z`;
 
   return (
@@ -35,7 +34,14 @@ export default function ElevationChart({ profile, width = 320, height = 120 }) {
             <Stop offset="100%" stopColor={colors.accent} stopOpacity={0} />
           </LinearGradient>
         </Defs>
-        <Line x1={0} y1={height - 1} x2={width} y2={height - 1} stroke={colors.divider} strokeWidth={1} />
+        <Line
+          x1={0}
+          y1={height - 1}
+          x2={width}
+          y2={height - 1}
+          stroke={colors.lineSoft}
+          strokeWidth={1}
+        />
         <Path d={fillPath} fill="url(#elev)" />
         <Path d={linePath} stroke={colors.accent} strokeWidth={2} fill="none" />
       </Svg>
@@ -44,7 +50,12 @@ export default function ElevationChart({ profile, width = 320, height = 120 }) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.s },
-  label: { ...typography.labelCapsSmall, color: colors.textSecondary },
-  range: { ...typography.caption, color: colors.textMuted },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
+  label: { ...typography.caps, fontSize: 10, color: colors.textMute },
+  range: { ...typography.mono, fontSize: 11, color: colors.textDim },
 });
