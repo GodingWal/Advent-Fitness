@@ -1,7 +1,28 @@
-import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { mockUser } from '../data/mockUser';
+import { getJSON, setJSON, removeItem } from '../services/storage';
+import { logger } from '../services/logger';
 
 const AppContext = createContext(null);
+
+export const APP_STORAGE_VERSION = 1;
+export const APP_STORAGE_KEYS = {
+  savedSpots: '@volt/v1/savedSpots',
+  submittedSpots: '@volt/v1/submittedSpots',
+  recordedRoutes: '@volt/v1/recordedRoutes',
+  meetups: '@volt/v1/meetups',
+  feedExtras: '@volt/v1/feedExtras',
+  settings: '@volt/v1/settings',
+};
+
+export function sanitizeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+export function sanitizeSettings(value, fallback) {
+  if (!value || typeof value !== 'object') return fallback;
+  return { ...fallback, ...value };
+}
 
 const SEED_RECORDED_ROUTES = [
   {
@@ -149,6 +170,7 @@ export function AppProvider({ children }) {
   const [achievements] = useState(SEED_ACHIEVEMENTS);
   const [meetups, setMeetups] = useState(SEED_MEETUPS);
   const [feedExtras, setFeedExtras] = useState([]);
+  const [hydrated, setHydrated] = useState(false);
   const [settings, setSettings] = useState({
     pushEnabled: true,
     healthSyncEnabled: false,
@@ -156,6 +178,57 @@ export function AppProvider({ children }) {
     privacyZone: SEED_PRIVACY_ZONE,
     heatmapEnabled: false,
   });
+
+  // Hydrate persisted slices once. Seeds above remain the fallback.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [sSpots, subSpots, routes, meets, feed, persistedSettings] = await Promise.all([
+          getJSON(APP_STORAGE_KEYS.savedSpots),
+          getJSON(APP_STORAGE_KEYS.submittedSpots),
+          getJSON(APP_STORAGE_KEYS.recordedRoutes),
+          getJSON(APP_STORAGE_KEYS.meetups),
+          getJSON(APP_STORAGE_KEYS.feedExtras),
+          getJSON(APP_STORAGE_KEYS.settings),
+        ]);
+        if (cancelled) return;
+        if (Array.isArray(sSpots)) setSavedSpots(sSpots);
+        if (Array.isArray(subSpots)) setSubmittedSpots(subSpots);
+        if (Array.isArray(routes) && routes.length) setRecordedRoutes(routes);
+        if (Array.isArray(meets) && meets.length) setMeetups(meets);
+        if (Array.isArray(feed)) setFeedExtras(feed);
+        setSettings((cur) => sanitizeSettings(persistedSettings, cur));
+      } catch (e) {
+        logger.warn('AppContext hydrate failed', { message: e?.message });
+      } finally {
+        if (!cancelled) setHydrated(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Persist after hydration. Individual effects avoid clobbering on first mount.
+  useEffect(() => {
+    if (hydrated) setJSON(APP_STORAGE_KEYS.savedSpots, savedSpots);
+  }, [hydrated, savedSpots]);
+  useEffect(() => {
+    if (hydrated) setJSON(APP_STORAGE_KEYS.submittedSpots, submittedSpots);
+  }, [hydrated, submittedSpots]);
+  useEffect(() => {
+    if (hydrated) setJSON(APP_STORAGE_KEYS.recordedRoutes, recordedRoutes);
+  }, [hydrated, recordedRoutes]);
+  useEffect(() => {
+    if (hydrated) setJSON(APP_STORAGE_KEYS.meetups, meetups);
+  }, [hydrated, meetups]);
+  useEffect(() => {
+    if (hydrated) setJSON(APP_STORAGE_KEYS.feedExtras, feedExtras);
+  }, [hydrated, feedExtras]);
+  useEffect(() => {
+    if (hydrated) setJSON(APP_STORAGE_KEYS.settings, settings);
+  }, [hydrated, settings]);
 
   // Stable callbacks — empty dep arrays because they only use setState updaters.
   const toggleSpot = useCallback((spot) => {
@@ -193,6 +266,22 @@ export function AppProvider({ children }) {
     setSettings((cur) => ({ ...cur, privacyZone: { ...cur.privacyZone, ...next } }));
   }, []);
 
+  const clearLocalData = useCallback(async () => {
+    setSavedSpots([]);
+    setSubmittedSpots([]);
+    setRecordedRoutes(SEED_RECORDED_ROUTES);
+    setMeetups(SEED_MEETUPS);
+    setFeedExtras([]);
+    setSettings({
+      pushEnabled: true,
+      healthSyncEnabled: false,
+      liveShareEnabled: false,
+      privacyZone: SEED_PRIVACY_ZONE,
+      heatmapEnabled: false,
+    });
+    await Promise.all(Object.values(APP_STORAGE_KEYS).map((k) => removeItem(k)));
+  }, []);
+
   // isSpotSaved depends on savedSpots — keep memoized but only on that.
   const isSpotSaved = useCallback((id) => savedSpots.some((s) => s.id === id), [savedSpots]);
 
@@ -206,6 +295,7 @@ export function AppProvider({ children }) {
       meetups,
       feedExtras,
       settings,
+      hydrated,
       toggleSpot,
       isSpotSaved,
       submitSpot,
@@ -214,6 +304,7 @@ export function AppProvider({ children }) {
       addFeedPost,
       updateSetting,
       updatePrivacyZone,
+      clearLocalData,
     }),
     [
       savedSpots,
@@ -223,6 +314,7 @@ export function AppProvider({ children }) {
       meetups,
       feedExtras,
       settings,
+      hydrated,
       isSpotSaved,
       toggleSpot,
       submitSpot,
@@ -231,6 +323,7 @@ export function AppProvider({ children }) {
       addFeedPost,
       updateSetting,
       updatePrivacyZone,
+      clearLocalData,
     ]
   );
 

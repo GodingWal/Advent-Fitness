@@ -25,6 +25,7 @@
   "settings": {
     "react": { "version": "detect" }
   },
+  "globals": { "__DEV__": "readonly" },
   "rules": {
     "react/prop-types": "off",
     "react/react-in-jsx-scope": "off",

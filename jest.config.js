@@ -10,4 +10,7 @@ module.exports = {
     '!src/data/**',
     '!**/__tests__/**',
   ],
+  coverageThreshold: {
+    global: { branches: 3, functions: 2, lines: 5, statements: 5 },
+  },
 };

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
-import { View, Text, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, StatusBar, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import HeaderBar from '../../components/HeaderBar';
@@ -10,12 +10,17 @@ import { Caps, Mono } from '../../components/VoltPrimitives';
 import { watchLocation, pathDistanceMiles } from '../../services/location';
 import { colors, spacing, radius, typography } from '../../theme';
 
-function formatTime(totalSeconds) {
+export function formatTime(totalSeconds) {
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
   if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+export function computeElapsedSec(accumulatedSec, startedAtMs, nowMs) {
+  if (!startedAtMs) return accumulatedSec;
+  return accumulatedSec + Math.max(0, Math.floor((nowMs - startedAtMs) / 1000));
 }
 
 const INDOOR_TYPES = ['weightLifting', 'meditation', 'yoga'];
@@ -34,7 +39,7 @@ const initialState = { seconds: 0, running: true, path: [], showMap: false };
 function reducer(state, action) {
   switch (action.type) {
     case 'tick':
-      return { ...state, seconds: state.seconds + 1 };
+      return { ...state, seconds: action.seconds };
     case 'togglePause':
       return { ...state, running: !state.running };
     case 'addPoint':
@@ -61,19 +66,39 @@ export default function ActivityTrackingScreen({ navigation, route }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { seconds, running, path, showMap } = state;
   const watchRef = useRef();
+  const runningRef = useRef(running);
+  runningRef.current = running;
+  const accumulatedRef = useRef(0);
+  const startedAtRef = useRef(Date.now());
+
+  // Timestamp-based timer — no setInterval drift. Pause freezes accumulation.
+  useEffect(() => {
+    if (running) startedAtRef.current = Date.now();
+    else
+      accumulatedRef.current = computeElapsedSec(
+        accumulatedRef.current,
+        startedAtRef.current,
+        Date.now()
+      );
+  }, [running]);
 
   useEffect(() => {
-    if (!running) return undefined;
-    const id = setInterval(() => dispatch({ type: 'tick' }), 1000);
+    const id = setInterval(() => {
+      if (!runningRef.current) return;
+      dispatch({
+        type: 'tick',
+        seconds: computeElapsedSec(accumulatedRef.current, startedAtRef.current, Date.now()),
+      });
+    }, 500);
     return () => clearInterval(id);
-  }, [running]);
+  }, []);
 
   useEffect(() => {
     if (isIndoor) return undefined;
     let cancelled = false;
     (async () => {
       const sub = await watchLocation((point) => {
-        if (cancelled) return;
+        if (cancelled || !runningRef.current) return;
         dispatch({ type: 'addPoint', point });
       });
       watchRef.current = sub;
@@ -90,9 +115,12 @@ export default function ActivityTrackingScreen({ navigation, route }) {
 
   const finish = useCallback(() => {
     watchRef.current?.remove?.();
+    const finalSec = runningRef.current
+      ? computeElapsedSec(accumulatedRef.current, startedAtRef.current, Date.now())
+      : seconds;
     navigation.replace('ActivitySummary', {
       activity,
-      durationSec: seconds,
+      durationSec: finalSec,
       distanceMi,
       coordinates: path.map((p) => ({ latitude: p.latitude, longitude: p.longitude })),
     });
@@ -101,11 +129,29 @@ export default function ActivityTrackingScreen({ navigation, route }) {
   const togglePause = useCallback(() => dispatch({ type: 'togglePause' }), []);
   const toggleMap = useCallback(() => dispatch({ type: 'toggleMap' }), []);
 
+  const confirmExit = useCallback(() => {
+    if (seconds === 0 && path.length === 0) {
+      navigation.goBack();
+      return;
+    }
+    Alert.alert('Discard activity?', 'Your current progress will be lost.', [
+      { text: 'Keep recording', style: 'cancel' },
+      {
+        text: 'Discard',
+        style: 'destructive',
+        onPress: () => {
+          watchRef.current?.remove?.();
+          navigation.goBack();
+        },
+      },
+    ]);
+  }, [navigation, seconds, path.length]);
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <HeaderBar
-        onBack={() => navigation.goBack()}
+        onBack={confirmExit}
         title="RECORDING"
         rightIcon={isIndoor ? undefined : showMap ? 'speedometer-outline' : 'map-outline'}
         onRight={isIndoor ? undefined : toggleMap}
@@ -164,7 +210,13 @@ export default function ActivityTrackingScreen({ navigation, route }) {
             <Caps size={11} color={colors.textMute}>
               Elapsed
             </Caps>
-            <Text style={styles.timer}>{formatTime(seconds)}</Text>
+            <Text
+              style={styles.timer}
+              accessibilityRole="timer"
+              accessibilityLabel={`Elapsed time ${formatTime(seconds)}`}
+            >
+              {formatTime(seconds)}
+            </Text>
           </View>
 
           <View style={styles.statGrid}>

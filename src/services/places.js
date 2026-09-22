@@ -8,6 +8,8 @@ const API_KEY =
   Constants.expoConfig?.extra?.googlePlacesApiKey ||
   '';
 
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || Constants.expoConfig?.extra?.apiUrl || '';
+
 const PLACES_BASE = 'https://maps.googleapis.com/maps/api/place';
 
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
@@ -44,9 +46,34 @@ async function getWithRetry(url, { retries = 2, baseDelay = 300, timeout = 8000 
 }
 
 export async function fetchNearbyPOIs({ category, latitude, longitude, radius = 5000 }) {
-  if (!API_KEY) return null;
   const params = PLACES_QUERY_MAP[category];
   if (!params) return [];
+
+  // Preferred: backend proxy keeps the Google key off-device.
+  // Backend contract: GET {API_URL}/places/nearby?category=&latitude=&longitude=&radius=
+  if (API_BASE_URL) {
+    try {
+      const q = new URLSearchParams({
+        category,
+        latitude: String(latitude),
+        longitude: String(longitude),
+        radius: String(radius),
+      });
+      const base = API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`;
+      const { data } = await getWithRetry(`${base}places/nearby?${q.toString()}`);
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data?.results)) return data.results;
+      // Backend missing/unexpected shape — fall through to direct/Google or null.
+      logger.warn('Places proxy unexpected shape, falling back', {});
+    } catch (e) {
+      logger.warn('Places proxy error, falling back to direct', {
+        message: e?.message,
+        status: e?.response?.status,
+      });
+    }
+  }
+
+  if (!API_KEY) return null;
 
   const query = new URLSearchParams({
     location: `${latitude},${longitude}`,

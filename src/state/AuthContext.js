@@ -1,7 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getJSON, removeItem, setJSON } from '../services/storage';
+import { configureHttp } from '../services/http';
+import { isValidEmail } from '../utils/validation';
 
-const AUTH_KEY = '@advent/auth';
+export const AUTH_KEY = '@advent/auth';
 
 const AuthContext = createContext(null);
 
@@ -22,8 +24,22 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  // Keep axios Authorization header in sync with the session.
+  const sessionRef = React.useRef(session);
+  sessionRef.current = session;
+  useEffect(() => {
+    configureHttp({
+      getToken: async () => sessionRef.current?.token || (await getJSON(AUTH_KEY))?.token || null,
+      onUnauthorized: () => {
+        removeItem(AUTH_KEY);
+        setSession(null);
+      },
+    });
+  }, []);
+
   const signIn = useCallback(async ({ email }) => {
-    const next = { token: `dev-token-${Date.now()}`, email };
+    if (!isValidEmail(email)) throw new Error('Please enter a valid email address.');
+    const next = { token: `dev-token-${Date.now()}`, email: email.trim().toLowerCase() };
     await setJSON(AUTH_KEY, next);
     setSession(next);
   }, []);

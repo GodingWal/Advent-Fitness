@@ -78,3 +78,27 @@ URL scheme: `volt://`. See `src/navigation/linking.js` for the route map. Exampl
 ## Testing
 
 Pure utility functions live under `src/services/` and are unit-tested in `src/services/__tests__`. Add tests for any new pure logic.
+
+Coverage thresholds are enforced in `jest.config.js` (`npm run test:ci`).
+
+## Persistence
+
+`AppContext` hydrates from `AsyncStorage` (`@volt/v1/*`) on boot and persists
+saved spots, submitted spots, recorded routes, meetups, feed extras, and settings.
+Seeds in `src/data/` remain the fallback. Use `clearLocalData()` to reset.
+
+## Telemetry
+
+`src/services/telemetry.js` wires `logger.setReporter`. Set `EXPO_PUBLIC_SENTRY_DSN`
+and install `@sentry/react-native` to forward production errors. `ErrorBoundary`
+already logs via `logger.error`.
+
+## Release
+
+`eas.json` ships dev/preview/production profiles. Fill `app.json -> extra.eas.projectId`
+and `updates.url` with your EAS project values, then `eas build` / `eas submit`.
+
+## Backend proxy for Places
+
+`fetchNearbyPOIs` tries `GET {EXPO_PUBLIC_API_URL}/places/nearby` first so the
+Google key stays server-side. Direct Google fallback remains for dev only.

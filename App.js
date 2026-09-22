@@ -9,6 +9,9 @@ import { linking } from './src/navigation/linking';
 import { AppProvider } from './src/state/AppContext';
 import { AuthProvider } from './src/state/AuthContext';
 import ErrorBoundary from './src/components/ErrorBoundary';
+import { initTelemetry } from './src/services/telemetry';
+
+initTelemetry();
 
 export default function App() {
   return (

@@ -22,6 +22,55 @@ export const http = axios.create({
   timeout: 10_000,
 });
 
+// Auth wiring without a React import (avoids context cycles).
+// AuthContext calls configureHttp({ getToken, onUnauthorized }) once.
+let _getToken = null;
+let _onUnauthorized = null;
+let _interceptorsInstalled = false;
+
+export function configureHttp({ getToken, onUnauthorized } = {}) {
+  if (typeof getToken === 'function') _getToken = getToken;
+  if (typeof onUnauthorized === 'function') _onUnauthorized = onUnauthorized;
+  if (_interceptorsInstalled) return http;
+  _interceptorsInstalled = true;
+
+  http.interceptors.request.use(async (config) => {
+    try {
+      const token = _getToken ? await _getToken() : null;
+      if (token) {
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (e) {
+      logger.warn('http auth header failed', { message: e?.message });
+    }
+    return config;
+  });
+
+  http.interceptors.response.use(
+    (res) => res,
+    (error) => {
+      if (error?.response?.status === 401 && _onUnauthorized) {
+        try {
+          _onUnauthorized();
+        } catch (_) {
+          // never break the rejection chain
+        }
+      }
+      return Promise.reject(error);
+    }
+  );
+  return http;
+}
+
+export function __resetHttpForTests() {
+  _getToken = null;
+  _onUnauthorized = null;
+  _interceptorsInstalled = false;
+  http.interceptors.request.clear?.();
+  http.interceptors.response.clear?.();
+}
+
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
 
 function shouldRetry(error) {

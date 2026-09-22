@@ -38,6 +38,8 @@
       "favicon": "./assets/favicon.png"
     },
     "scheme": "volt",
+    "runtimeVersion": { "policy": "appVersion" },
+    "updates": { "url": "https://u.expo.dev/00000000-0000-0000-0000-000000000000" },
     "plugins": [
       [
         "expo-location",
@@ -48,7 +50,9 @@
     ],
     "extra": {
       "apiUrl": "https://api.volt.app/",
-      "googlePlacesApiKey": ""
+      "googlePlacesApiKey": "",
+      "sentryDsn": "",
+      "eas": { "projectId": "00000000-0000-0000-0000-000000000000" }
     }
   }
 }
