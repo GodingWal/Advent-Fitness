@@ -13,7 +13,35 @@ export interface User {
   name: string;
   phone?: string | null;
   status: UserStatus;
+  emailVerified: boolean;
   createdAt: string;
+}
+
+export interface Profile {
+  id: string;
+  userId: string;
+  weeklyTargetH: number;
+  goal: string;
+  activities: string[];
+  homeGymId: string | null;
+  privacy: Record<string, unknown>;
+  units: string;
+  experience: string;
+  notifications: Record<string, unknown>;
+  onboardingCompleted: boolean;
+  updatedAt: string;
+}
+
+export interface ProfilePatch {
+  weeklyTargetH?: number;
+  goal?: string;
+  activities?: string[];
+  homeGymId?: string | null;
+  privacy?: Record<string, unknown>;
+  units?: string;
+  experience?: string;
+  notifications?: Record<string, unknown>;
+  onboardingCompleted?: boolean;
 }
 
 export interface Gym {

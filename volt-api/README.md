@@ -2,7 +2,7 @@
 
 Backend service for the Volt Expo app. The repo root stays the Expo mobile app; everything here lives under `volt-api/` and touches nothing outside it.
 
-Stack: Node.js + TypeScript + Fastify + Zod + Prisma 5 (Postgres). No database server is required for local dev: when `DATABASE_URL` is unset the API runs on an in-memory store + seed data out of the box. `prisma/schema.prisma` (Postgres) is the source-of-truth schema for real deployments; checked-in SQL lives in `prisma/migrations/0001_init/migration.sql` (generated offline via `prisma migrate diff`, no DB needed).
+Stack: Node.js + TypeScript + Fastify + Zod + Prisma 5 (Postgres). No database server is required for local dev: when `DATABASE_URL` is unset the API runs on an in-memory store + seed data out of the box. `prisma/schema.prisma` (Postgres) is the source-of-truth schema for real deployments; checked-in SQL lives in `prisma/migrations/0001_init/migration.sql` (generated offline via `prisma migrate diff`, no DB needed) plus `prisma/migrations/0002_profile/migration.sql` (`Profile` model + `User.emailVerified`, generated the same way; `0001` untouched).
 
 ## Run
 
@@ -41,7 +41,7 @@ Production secrets: if `NODE_ENV=production` and any of `AUTH_JWT_SECRET` / `QR_
 
 ## Postgres (optional) — memory fallback by default
 
-With no `DATABASE_URL` set, all routes run against the existing in-memory store (`src/db/memoryStore.ts`); no services needed and the full test suite passes offline. When `DATABASE_URL` is set, routes use the Prisma-backed store instead: `src/db/store.ts` exports `getStore()`, which returns the memory or Prisma (`src/db/prismaStore.ts`) implementation behind the same async method surface; routes call `getStore()` and never touch Maps directly. Ephemeral data (refresh tokens, QR nonces, Kisi dedupe, rate limits) stays in process memory in both modes.
+With no `DATABASE_URL` set, all routes run against the existing in-memory store (`src/db/memoryStore.ts`); no services needed and the full test suite passes offline. When `DATABASE_URL` is set, routes use the Prisma-backed store instead: `src/db/store.ts` exports `getStore()`, which returns the memory or Prisma (`src/db/prismaStore.ts`) implementation behind the same async method surface; routes call `getStore()` and never touch Maps directly. Ephemeral data (refresh tokens, email-verify / password-reset tokens, QR nonces, Kisi dedupe, rate limits) stays in process memory in both modes.
 
 Local Postgres:
 
@@ -70,11 +70,23 @@ Passwords: `node:crypto` scrypt. Refresh tokens: opaque 32-byte, stored as SHA-2
 
 Auth:
 
-- `POST /auth/register {email,password,name,phone?}` → `201 {accessToken,refreshToken,user}`
-- `POST /auth/login {email,password}` → `200 {accessToken,refreshToken,user}`
+- `POST /auth/register {email,password,name,phone?}` → `201 {accessToken,refreshToken,user}` (`user` includes `emailVerified:false`; non-production also returns `devVerificationToken`, see below)
+- `POST /auth/login {email,password}` → `200 {accessToken,refreshToken,user}` (login works whether or not the email is verified — verification is notice-only)
 - `POST /auth/refresh {refreshToken}` → `200 {accessToken,refreshToken}` (rotate; reused → `401`)
 - `POST /auth/logout {refreshToken}` → `200` (revoke)
 - `GET /auth/me` (Bearer) → `200 {user}`
+- Duplicate register → `409 {code:"EMAIL_TAKEN",message:"An account with this email already exists. Try logging in or reset your password."}`
+- `POST /auth/verify-email {token}` → `200 {verified:true}`; unknown token → `404 {code:"INVALID_TOKEN"}`, expired token (24 h TTL) → `410 {code:"INVALID_TOKEN"}`
+- `POST /auth/password-reset/request {email}` → always `200 {sent:true}` (unknown emails get the same response — no user enumeration); non-production also returns `devResetToken` for real accounts
+- `POST /auth/password-reset/confirm {token,newPassword}` (`newPassword` min 8 via Zod, else `400`) → `200 {success:true}`; single-use tokens (1 h TTL, reuse/unknown → `404 {code:"INVALID_TOKEN"}`, expired → `410`); confirm revokes all of the user's refresh tokens
+
+Dev tokens: register's `devVerificationToken` and reset-request's `devResetToken` are returned ONLY when `NODE_ENV != production` (never in prod) and are also `console.log`ged server-side in non-production. Tokens are random 32-byte hex; only their SHA-256 is stored. They are never logged or returned in production, and password hashes / stored token hashes never appear in any response.
+
+Profile (all Bearer):
+
+- `GET /v1/profile` → `200 {profile}` (auto-creates the default profile when missing)
+- `PUT /v1/profile` (all fields optional, unknown fields stripped) → `200 {profile}`
+- Shape: `{id,userId,weeklyTargetH (default 3),goal (default ""),activities (default []),homeGymId (default null),privacy (default {}),units (default "mi"),experience (default "beginner"),notifications (default {}),onboardingCompleted (default false),updatedAt}` — a default row is created on register in both memory and Prisma modes
 
 Access (all Bearer):
 

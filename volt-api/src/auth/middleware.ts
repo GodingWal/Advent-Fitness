@@ -29,6 +29,7 @@ export function publicUser(u: User): {
   name: string;
   phone?: string | null;
   status: string;
+  emailVerified: boolean;
   createdAt: string;
 } {
   return {
@@ -37,6 +38,7 @@ export function publicUser(u: User): {
     name: u.name,
     phone: u.phone ?? null,
     status: u.status,
+    emailVerified: u.emailVerified ?? false,
     createdAt: u.createdAt,
   };
 }

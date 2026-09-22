@@ -6,7 +6,11 @@ export const linking = {
     screens: {
       Splash: 'welcome',
       Auth: 'signup',
+      SignUpEmail: 'signup/email',
+      SignUpPhone: 'signup/phone',
       Login: 'login',
+      ForgotPassword: 'forgot-password',
+      ResetPassword: 'reset-password/:token?',
       OnboardingTrack: 'onboarding/track',
       OnboardingFavorites: 'onboarding/favorites',
       Main: {

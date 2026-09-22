@@ -7,34 +7,38 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HeaderBar from '../../components/HeaderBar';
 import PrimaryButton from '../../components/PrimaryButton';
+import OutlineButton from '../../components/OutlineButton';
 import { Caps } from '../../components/VoltPrimitives';
 import { useAuth } from '../../state/AuthContext';
 import { isValidEmail, isValidPassword } from '../../utils/validation';
+import { friendlyAuthError } from '../../services/authErrors';
 import { strings } from '../../i18n/strings';
 import { colors, spacing, typography } from '../../theme';
 
-function serverMessage(e) {
-  const msg = e?.response?.data?.message || e?.message;
-  if (typeof msg === 'string' && msg.trim()) return msg;
-  return strings.auth.signInFailed;
-}
+const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !== 'production';
+const DEMO_EMAIL = 'member@volt.test';
+const DEMO_PASSWORD = 'Volt12345!';
 
 export default function LoginScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: null, password: null, form: null });
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (overrides) => {
+    const nextEmail = overrides?.email ?? email;
+    const nextPassword = overrides?.password ?? password;
     const next = {
-      email: isValidEmail(email) ? null : strings.auth.invalidEmail,
-      password: isValidPassword(password) ? null : strings.auth.passwordTooShort,
+      email: isValidEmail(nextEmail) ? null : strings.auth.invalidEmail,
+      password: isValidPassword(nextPassword) ? null : strings.auth.passwordTooShort,
       form: null,
     };
     setErrors(next);
@@ -42,12 +46,21 @@ export default function LoginScreen({ navigation }) {
 
     setSubmitting(true);
     try {
-      await login({ email: email.trim(), password });
+      await login({ email: nextEmail.trim(), password: nextPassword });
     } catch (e) {
-      setErrors((prev) => ({ ...prev, form: serverMessage(e) }));
+      setErrors((prev) => ({
+        ...prev,
+        form: friendlyAuthError(e, { fallback: strings.auth.signInFailed }),
+      }));
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleDemo = async () => {
+    setEmail(DEMO_EMAIL);
+    setPassword(DEMO_PASSWORD);
+    await handleSubmit({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
   };
 
   return (
@@ -92,9 +105,22 @@ export default function LoginScreen({ navigation }) {
           </Text>
         ) : null}
 
-        <Caps size={9} color={colors.textMute} style={[styles.label, { marginTop: spacing.l }]}>
-          {strings.auth.passwordLabel}
-        </Caps>
+        <View style={[styles.labelRow, { marginTop: spacing.l }]}>
+          <Caps size={9} color={colors.textMute}>
+            {strings.auth.passwordLabel}
+          </Caps>
+          <TouchableOpacity
+            onPress={() => setShowPassword((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel={
+              showPassword ? strings.auth.hidePassword : strings.auth.showPassword
+            }
+          >
+            <Text style={styles.toggle}>
+              {(showPassword ? strings.auth.hidePassword : strings.auth.showPassword).toUpperCase()}
+            </Text>
+          </TouchableOpacity>
+        </View>
         <TextInput
           style={[styles.input, errors.password && styles.inputError]}
           value={password}
@@ -105,12 +131,12 @@ export default function LoginScreen({ navigation }) {
           }}
           placeholder={strings.auth.passwordPlaceholder}
           placeholderTextColor={colors.textDim}
-          secureTextEntry
+          secureTextEntry={!showPassword}
           autoComplete="password"
           textContentType="password"
           accessibilityLabel={strings.auth.passwordLabel}
           returnKeyType="go"
-          onSubmitEditing={handleSubmit}
+          onSubmitEditing={() => handleSubmit()}
         />
         {errors.password ? (
           <Text style={styles.errorText} accessibilityLiveRegion="polite">
@@ -123,12 +149,28 @@ export default function LoginScreen({ navigation }) {
           </Text>
         ) : null}
 
+        <TouchableOpacity
+          onPress={() => navigation.navigate('ForgotPassword')}
+          style={styles.forgotBtn}
+          accessibilityRole="button"
+        >
+          <Text style={styles.forgotText}>{strings.auth.forgotPassword.toUpperCase()}</Text>
+        </TouchableOpacity>
+
         <View style={[styles.cta, { marginBottom: insets.bottom + spacing.l }]}>
+          {isDev ? (
+            <OutlineButton
+              label={strings.auth.useDemoAccount}
+              onPress={handleDemo}
+              disabled={submitting}
+              style={{ marginBottom: spacing.m }}
+            />
+          ) : null}
           <PrimaryButton
             label="Sign in"
             trailingIcon="arrow-forward"
-            onPress={handleSubmit}
-            disabled={submitting}
+            onPress={() => handleSubmit()}
+            loading={submitting}
           />
         </View>
       </View>
@@ -148,6 +190,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   label: { marginBottom: spacing.s },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.s,
+  },
+  toggle: { ...typography.caps, fontSize: 10, color: colors.accent },
   input: {
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
@@ -158,5 +207,7 @@ const styles = StyleSheet.create({
   },
   inputError: { borderBottomColor: colors.accent2 },
   errorText: { ...typography.mono, fontSize: 11, color: colors.accent2, marginTop: 4 },
+  forgotBtn: { alignSelf: 'flex-start', paddingVertical: spacing.s, marginTop: spacing.s },
+  forgotText: { ...typography.caps, fontSize: 10, color: colors.textMute },
   cta: { marginTop: 'auto' },
 });

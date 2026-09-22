@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { http, configureHttp } from '../services/http';
+import { getProfile as fetchProfile, updateProfile as saveProfile } from '../services/profile';
 import { isValidEmail, isValidPassword } from '../utils/validation';
 import { strings } from '../i18n/strings';
 
@@ -17,6 +18,8 @@ function normalizeEmail(email) {
 export function AuthProvider({ children }) {
   const [session, setSession] = React.useState(null);
   const [hydrating, setHydrating] = React.useState(true);
+  const [profile, setProfile] = React.useState(null);
+  const [profileLoading, setProfileLoading] = React.useState(false);
 
   const accessTokenRef = useRef(null);
   const refreshInflightRef = useRef(null);
@@ -38,7 +41,27 @@ export function AuthProvider({ children }) {
     accessTokenRef.current = null;
     await persistRefresh(null);
     setSession(null);
+    setProfile(null);
   }, [persistRefresh]);
+
+  const refreshProfile = useCallback(async () => {
+    setProfileLoading(true);
+    try {
+      const next = await fetchProfile();
+      setProfile(next);
+      return next;
+    } catch {
+      return null;
+    } finally {
+      setProfileLoading(false);
+    }
+  }, []);
+
+  const updateProfile = useCallback(async (patch) => {
+    const next = await saveProfile(patch);
+    if (next) setProfile(next);
+    return next;
+  }, []);
 
   const applyAuthResult = useCallback(
     async (data) => {
@@ -60,9 +83,11 @@ export function AuthProvider({ children }) {
       if (!isValidEmail(cleanEmail)) throw new Error(strings.auth.invalidEmail);
       if (!isValidPassword(password)) throw new Error(strings.auth.passwordTooShort);
       const res = await http.post('/auth/login', { email: cleanEmail, password });
-      return applyAuthResult(res.data);
+      const user = await applyAuthResult(res.data);
+      refreshProfile().catch(() => {});
+      return user;
     },
-    [applyAuthResult]
+    [applyAuthResult, refreshProfile]
   );
 
   const register = useCallback(
@@ -75,9 +100,11 @@ export function AuthProvider({ children }) {
         payload.name = String(name).trim();
       }
       const res = await http.post('/auth/register', payload);
-      return applyAuthResult(res.data);
+      const user = await applyAuthResult(res.data);
+      refreshProfile().catch(() => {});
+      return { user, devVerificationToken: res.data?.devVerificationToken ?? null };
     },
-    [applyAuthResult]
+    [applyAuthResult, refreshProfile]
   );
 
   const refresh = useCallback(async () => {
@@ -114,6 +141,23 @@ export function AuthProvider({ children }) {
     return user || null;
   }, []);
 
+  const requestPasswordReset = useCallback(async (email) => {
+    const cleanEmail = normalizeEmail(email);
+    if (!isValidEmail(cleanEmail)) throw new Error(strings.auth.invalidEmail);
+    const res = await http.post('/auth/password-reset/request', { email: cleanEmail });
+    return res.data || { sent: true };
+  }, []);
+
+  const confirmPasswordReset = useCallback(async ({ token, newPassword }) => {
+    if (!token || !String(token).trim()) throw new Error(strings.auth.genericError);
+    if (!isValidPassword(newPassword)) throw new Error(strings.auth.passwordTooShort);
+    const res = await http.post('/auth/password-reset/confirm', {
+      token: String(token).trim(),
+      newPassword,
+    });
+    return res.data || null;
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await http.post('/auth/logout');
@@ -127,9 +171,11 @@ export function AuthProvider({ children }) {
   const refreshRef = useRef(refresh);
   const meRef = useRef(me);
   const logoutRef = useRef(logout);
+  const refreshProfileRef = useRef(refreshProfile);
   refreshRef.current = refresh;
   meRef.current = me;
   logoutRef.current = logout;
+  refreshProfileRef.current = refreshProfile;
 
   useEffect(() => {
     configureHttp({
@@ -163,7 +209,7 @@ export function AuthProvider({ children }) {
             await refreshRef.current();
             const user = await meRef.current();
             if (!cancelled && user) {
-              // session already set by me()
+              refreshProfileRef.current().catch(() => {});
             } else if (!cancelled && !user) {
               await logoutRef.current();
             }
@@ -186,14 +232,36 @@ export function AuthProvider({ children }) {
       user: session?.user || null,
       isAuthenticated: Boolean(session?.user),
       hydrating,
+      profile,
+      profileLoading,
+      needsOnboarding:
+        Boolean(session?.user) && Boolean(profile) && profile.onboardingCompleted !== true,
+      refreshProfile,
+      updateProfile,
       login,
       register,
       logout,
       signOut: logout,
       refresh,
       me,
+      requestPasswordReset,
+      confirmPasswordReset,
     }),
-    [session, hydrating, login, register, logout, refresh, me]
+    [
+      session,
+      hydrating,
+      profile,
+      profileLoading,
+      refreshProfile,
+      updateProfile,
+      login,
+      register,
+      logout,
+      refresh,
+      me,
+      requestPasswordReset,
+      confirmPasswordReset,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

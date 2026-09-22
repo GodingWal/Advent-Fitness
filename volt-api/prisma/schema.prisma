@@ -52,16 +52,34 @@ enum AccessEventResult {
 }
 
 model User {
-  id           String       @id @default(uuid())
-  email        String       @unique
-  passwordHash String
-  name         String
-  phone        String?
-  status       UserStatus   @default(ACTIVE)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  memberships  Membership[]
-  accessEvents AccessEvent[]
+  id            String       @id @default(uuid())
+  email         String       @unique
+  passwordHash  String
+  name          String
+  phone         String?
+  status        UserStatus   @default(ACTIVE)
+  emailVerified Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  memberships   Membership[]
+  accessEvents  AccessEvent[]
+  profile       Profile?
+}
+
+model Profile {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeklyTargetH       Int      @default(3)
+  goal                String   @default("")
+  activities          String[] @default([])
+  homeGymId           String?
+  privacy             Json     @default("{}")
+  units               String   @default("mi")
+  experience          String   @default("beginner")
+  notifications       Json     @default("{}")
+  onboardingCompleted Boolean  @default(false)
+  updatedAt           DateTime @updatedAt
 }
 
 model Gym {

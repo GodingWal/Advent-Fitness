@@ -1,5 +1,5 @@
+import { ActivityIndicator, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import React from 'react';
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { colors, spacing, radius, typography } from '../theme';
 
@@ -12,28 +12,32 @@ export default function PrimaryButton({
   style,
   textStyle,
   disabled = false,
+  loading = false,
   variant = 'primary',
 }) {
   const isPrimary = variant === 'primary';
   const bg = isPrimary ? colors.accent : colors.accent2;
   const fg = '#0A0C10';
+  const isDisabled = disabled || loading;
 
   return (
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={onPress}
-      disabled={disabled}
+      disabled={isDisabled}
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      style={[styles.btn, { backgroundColor: bg }, disabled && styles.disabled, style]}
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
+      style={[styles.btn, { backgroundColor: bg }, isDisabled && styles.disabled, style]}
     >
       <View style={styles.row}>
-        {leadingIcon ? (
+        {loading ? (
+          <ActivityIndicator size="small" color={fg} style={styles.lead} />
+        ) : leadingIcon ? (
           <Ionicons name={leadingIcon} size={18} color={fg} style={styles.lead} />
         ) : null}
         <Text style={[styles.label, { color: fg }, textStyle]}>{label}</Text>
-        {trailingIcon ? (
+        {!loading && trailingIcon ? (
           <Ionicons name={trailingIcon} size={18} color={fg} style={styles.trail} />
         ) : null}
       </View>

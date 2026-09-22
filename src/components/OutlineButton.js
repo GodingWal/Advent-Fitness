@@ -12,14 +12,17 @@ export default function OutlineButton({
   color = colors.line,
   textColor = colors.text,
   trailingIcon,
+  disabled = false,
 }) {
   return (
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={[styles.btn, { borderColor: color }, style]}
+      accessibilityState={{ disabled }}
+      style={[styles.btn, { borderColor: color }, disabled && styles.disabled, style]}
     >
       <View style={styles.row}>
         <Text style={[styles.label, { color: textColor }, textStyle]}>{label}</Text>
@@ -50,4 +53,5 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   trail: { marginLeft: spacing.s },
+  disabled: { opacity: 0.4 },
 });

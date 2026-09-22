@@ -8,12 +8,13 @@ import PageDots from '../../components/PageDots';
 import PrimaryButton from '../../components/PrimaryButton';
 import IconBadge from '../../components/IconBadge';
 import { useAuth } from '../../state/AuthContext';
-import { isValidEmail, isValidPassword } from '../../utils/validation';
+import { friendlyAuthError } from '../../services/authErrors';
 import { strings } from '../../i18n/strings';
 import { colors, spacing, radius, typography, shadows } from '../../theme';
 
 // VOLT onboarding 03 — Arena picker. 3×3 grid of square tiles. Selected =
 // accent bg + dark text + lime shadow.
+// Saves { activities } to PUT /v1/profile, then sets onboardingCompleted:true.
 const ARENAS = [
   { type: 'surfing', label: 'Surf', icon: 'wave' },
   { type: 'hiking', label: 'Hike', icon: 'mountain' },
@@ -25,37 +26,23 @@ const ARENAS = [
   { type: 'tennis', label: 'Tennis', icon: 'run' },
 ];
 
-function serverMessage(e) {
-  const msg = e?.response?.data?.message || e?.message;
-  if (typeof msg === 'string' && msg.trim()) return msg;
-  return strings.auth.signUpFailed;
-}
-
-export default function OnboardingFavoritesScreen({ navigation, route }) {
+export default function OnboardingFavoritesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { register } = useAuth();
+  const { updateProfile, refreshProfile } = useAuth();
   const [picked, setPicked] = useState(new Set(['surfing', 'hiking']));
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const pendingSignup = route?.params?.pendingSignup || null;
 
   const finish = async () => {
-    if (!pendingSignup) {
-      navigation.navigate('Auth');
-      return;
-    }
-    const { email, password, name } = pendingSignup;
-    if (!isValidEmail(email) || !isValidPassword(password)) {
-      setError(strings.auth.signUpFailed);
-      return;
-    }
     setError(null);
     setSubmitting(true);
     try {
-      await register({ email, password, name });
-      // RootNavigator switches to the app stack once isAuthenticated is true.
+      await updateProfile({ activities: Array.from(picked) });
+      await updateProfile({ onboardingCompleted: true });
+      await refreshProfile().catch(() => {});
+      // RootNavigator switches to the app stack once onboarding is complete.
     } catch (e) {
-      setError(serverMessage(e));
+      setError(friendlyAuthError(e, { fallback: strings.auth.signUpFailed }));
     } finally {
       setSubmitting(false);
     }
@@ -133,7 +120,7 @@ export default function OnboardingFavoritesScreen({ navigation, route }) {
             label="Enter VOLT"
             trailingIcon="arrow-forward"
             onPress={finish}
-            disabled={submitting}
+            loading={submitting}
           />
         </View>
       </View>

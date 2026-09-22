@@ -5,6 +5,8 @@ import type {
   Gym,
   GymLocation,
   Membership,
+  Profile,
+  ProfilePatch,
   RefreshTokenRecord,
   User,
 } from './types';
@@ -17,6 +19,7 @@ import {
   listEventsForUser as listEventsForUserMem,
   locations,
   memberships,
+  profiles,
   refreshTokens,
   seenKisiEventIds,
   users,
@@ -29,6 +32,11 @@ export interface Store {
   getUserById(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(u: User): Promise<void>;
+  updateUser(id: string, patch: Partial<User>): Promise<User | undefined>;
+  revokeAllRefreshForUser(userId: string): Promise<void>;
+  getProfileByUserId(userId: string): Promise<Profile | undefined>;
+  createProfile(p: Profile): Promise<void>;
+  updateProfile(userId: string, patch: ProfilePatch): Promise<Profile | undefined>;
   getGym(id: string): Promise<Gym | undefined>;
   createGym(g: Gym): Promise<void>;
   getLocation(id: string): Promise<GymLocation | undefined>;
@@ -59,6 +67,7 @@ class MemoryStore implements Store {
   async reset(): Promise<void> {
     users.clear();
     usersByEmail.clear();
+    profiles.clear();
     gyms.clear();
     locations.clear();
     memberships.clear();
@@ -69,6 +78,8 @@ class MemoryStore implements Store {
     const { providerConnections, accessRules } = await import('./memoryStore');
     providerConnections.clear();
     accessRules.clear();
+    const { resetAccountTokens } = await import('../auth/accountTokens');
+    resetAccountTokens();
   }
 
   async getUserById(id: string): Promise<User | undefined> {
@@ -83,6 +94,52 @@ class MemoryStore implements Store {
   async createUser(u: User): Promise<void> {
     users.set(u.id, u);
     usersByEmail.set(u.email.toLowerCase(), u.id);
+  }
+
+  async updateUser(id: string, patch: Partial<User>): Promise<User | undefined> {
+    const cur = users.get(id);
+    if (!cur) return undefined;
+    const next: User = { ...cur };
+    if (patch.passwordHash !== undefined) next.passwordHash = patch.passwordHash;
+    if (patch.emailVerified !== undefined) next.emailVerified = patch.emailVerified;
+    if (patch.name !== undefined) next.name = patch.name;
+    if (patch.phone !== undefined) next.phone = patch.phone;
+    if (patch.status !== undefined) next.status = patch.status;
+    users.set(id, next);
+    return next;
+  }
+
+  async revokeAllRefreshForUser(userId: string): Promise<void> {
+    for (const rec of refreshTokens.values()) {
+      if (rec.userId === userId) rec.revoked = true;
+    }
+  }
+
+  async getProfileByUserId(userId: string): Promise<Profile | undefined> {
+    return profiles.get(userId);
+  }
+
+  async createProfile(p: Profile): Promise<void> {
+    profiles.set(p.userId, p);
+  }
+
+  async updateProfile(userId: string, patch: ProfilePatch): Promise<Profile | undefined> {
+    const cur = profiles.get(userId);
+    if (!cur) return undefined;
+    const { nowIso } = await import('./memoryStore');
+    const next: Profile = { ...cur };
+    if (patch.weeklyTargetH !== undefined) next.weeklyTargetH = patch.weeklyTargetH;
+    if (patch.goal !== undefined) next.goal = patch.goal;
+    if (patch.activities !== undefined) next.activities = patch.activities;
+    if (patch.homeGymId !== undefined) next.homeGymId = patch.homeGymId;
+    if (patch.privacy !== undefined) next.privacy = patch.privacy;
+    if (patch.units !== undefined) next.units = patch.units;
+    if (patch.experience !== undefined) next.experience = patch.experience;
+    if (patch.notifications !== undefined) next.notifications = patch.notifications;
+    if (patch.onboardingCompleted !== undefined) next.onboardingCompleted = patch.onboardingCompleted;
+    next.updatedAt = nowIso();
+    profiles.set(userId, next);
+    return next;
   }
 
   async getGym(id: string): Promise<Gym | undefined> {

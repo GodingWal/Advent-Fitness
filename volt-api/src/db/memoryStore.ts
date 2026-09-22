@@ -7,12 +7,14 @@ import type {
   Gym,
   GymLocation,
   Membership,
+  Profile,
   RefreshTokenRecord,
   User,
 } from './types';
 
 export const users = new Map<string, User>();
 export const usersByEmail = new Map<string, string>();
+export const profiles = new Map<string, Profile>();
 export const gyms = new Map<string, Gym>();
 export const locations = new Map<string, GymLocation>();
 export const memberships = new Map<string, Membership>();
@@ -33,9 +35,27 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
+export function defaultProfile(userId: string): Profile {
+  return {
+    id: newId('profile'),
+    userId,
+    weeklyTargetH: 3,
+    goal: '',
+    activities: [],
+    homeGymId: null,
+    privacy: {},
+    units: 'mi',
+    experience: 'beginner',
+    notifications: {},
+    onboardingCompleted: false,
+    updatedAt: nowIso(),
+  };
+}
+
 export function resetStore(): void {
   users.clear();
   usersByEmail.clear();
+  profiles.clear();
   gyms.clear();
   locations.clear();
   memberships.clear();

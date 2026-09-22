@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SplashScreen from '../screens/splash/SplashScreen';
@@ -6,6 +6,9 @@ import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
 import SignUpEmailScreen from '../screens/auth/SignUpEmailScreen';
 import SignUpPhoneScreen from '../screens/auth/SignUpPhoneScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
+import ApiConnectionScreen from '../screens/auth/ApiConnectionScreen';
 import OnboardingTrackScreen from '../screens/onboarding/OnboardingTrackScreen';
 import OnboardingFavoritesScreen from '../screens/onboarding/OnboardingFavoritesScreen';
 import ActivityPickerScreen from '../screens/activity/ActivityPickerScreen';
@@ -27,7 +30,11 @@ import TrainersScreen from '../screens/trainers/TrainersScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import MainDrawer from './MainDrawer';
 import { useAuth } from '../state/AuthContext';
+import { setApiBaseUrl } from '../services/http';
+import { checkHealth, getStoredDevApiUrl } from '../services/apiHealth';
 import { colors } from '../theme';
+
+const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !== 'production';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,6 +46,17 @@ function AuthStack() {
       <Stack.Screen name="SignUpEmail" component={SignUpEmailScreen} />
       <Stack.Screen name="SignUpPhone" component={SignUpPhoneScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+      <Stack.Screen name="OnboardingTrack" component={OnboardingTrackScreen} />
+      <Stack.Screen name="OnboardingFavorites" component={OnboardingFavoritesScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function OnboardingStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="OnboardingTrack">
       <Stack.Screen name="OnboardingTrack" component={OnboardingTrackScreen} />
       <Stack.Screen name="OnboardingFavorites" component={OnboardingFavoritesScreen} />
     </Stack.Navigator>
@@ -81,14 +99,59 @@ function AppStack() {
 }
 
 export default function RootNavigator() {
-  const { isAuthenticated, hydrating } = useAuth();
+  const { isAuthenticated, hydrating, refreshProfile, needsOnboarding } = useAuth();
+  const [apiStatus, setApiStatus] = useState('checking');
+  const [apiUrl, setApiUrl] = useState('');
+  const [apiError, setApiError] = useState(null);
 
-  if (hydrating) {
+  const runHealthCheck = useCallback(async () => {
+    setApiStatus((prev) => (prev === 'reachable' ? prev : 'checking'));
+    try {
+      if (isDev) {
+        const stored = await getStoredDevApiUrl();
+        if (stored) setApiBaseUrl(stored);
+      }
+    } catch {
+      // best-effort dev override
+    }
+    const result = await checkHealth();
+    setApiUrl(result.url || '');
+    setApiError(result.error);
+    setApiStatus(result.ok ? 'reachable' : 'unreachable');
+    return result;
+  }, []);
+
+  useEffect(() => {
+    runHealthCheck();
+  }, [runHealthCheck]);
+
+  useEffect(() => {
+    if (apiStatus === 'reachable' && isAuthenticated) {
+      refreshProfile().catch(() => {});
+    }
+  }, [apiStatus, isAuthenticated, refreshProfile]);
+
+  if (apiStatus === 'checking' || hydrating) {
     return (
       <View style={styles.splash}>
         <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
+  }
+
+  if (apiStatus === 'unreachable') {
+    return (
+      <ApiConnectionScreen
+        url={apiUrl}
+        error={apiError}
+        status="disconnected"
+        onRetry={runHealthCheck}
+      />
+    );
+  }
+
+  if (isAuthenticated && needsOnboarding) {
+    return <OnboardingStack />;
   }
 
   return isAuthenticated ? <AppStack /> : <AuthStack />;

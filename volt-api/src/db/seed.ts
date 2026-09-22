@@ -1,6 +1,7 @@
-import { newId, nowIso, resetStore } from './memoryStore';
+import { defaultProfile, newId, nowIso, resetStore } from './memoryStore';
 import { getStore, getStoreKind } from './store';
 import { hashPassword } from '../auth/password';
+import { resetAccountTokens } from '../auth/accountTokens';
 import { resetRateLimits } from '../access/rateLimit';
 import { resetQrNonces } from '../access/qr';
 
@@ -20,6 +21,7 @@ export async function seed(): Promise<{
   }
   resetRateLimits();
   resetQrNonces();
+  resetAccountTokens();
 
   const gymId = newId('gym');
   await store.createGym({ id: gymId, name: 'Snap Fitness', status: 'ACTIVE', createdAt: nowIso() });
@@ -79,8 +81,10 @@ export async function seed(): Promise<{
     name: 'Seed Member',
     phone: null,
     status: 'ACTIVE',
+    emailVerified: true,
     createdAt: nowIso(),
   });
+  await store.createProfile(defaultProfile(userId));
 
   const membershipId = newId('mem');
   const startsAt = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

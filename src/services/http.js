@@ -1,10 +1,39 @@
 import axios from 'axios';
-import Constants from 'expo-constants';
 import { logger } from './logger';
 
-const RAW_BASE_URL = process.env.EXPO_PUBLIC_API_URL || Constants.expoConfig?.extra?.apiUrl || '';
-
 const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !== 'production';
+
+function envBaseUrl() {
+  return process.env.EXPO_PUBLIC_API_URL || '';
+}
+
+let _overrideBaseUrl = null;
+
+// Development-only API address override (used by the connection screen).
+// Ignored in production builds.
+export function setApiBaseUrl(url) {
+  _overrideBaseUrl = url || null;
+  http.defaults.baseURL = resolveApiBaseUrl({ loud: false });
+}
+
+export function getApiBaseUrl() {
+  return _overrideBaseUrl || envBaseUrl();
+}
+
+function resolveApiBaseUrl({ loud = true } = {}) {
+  const url = getApiBaseUrl();
+  if (!url) {
+    const message =
+      'EXPO_PUBLIC_API_URL is missing. Run npm run dev (it sets the address automatically).';
+    if (loud) {
+      logger.error(message);
+      if (isDev) throw new Error(message);
+    }
+    return '';
+  }
+  assertSafeUrl(url);
+  return url;
+}
 
 function assertSafeUrl(url) {
   if (!url) return;
@@ -14,16 +43,26 @@ function assertSafeUrl(url) {
       url
     );
   const isHttps = url.startsWith('https://');
-  if (!isHttps && !(isDev && (isLocalhost || isPrivateLan))) {
-    throw new Error(`Refusing to use non-HTTPS API URL outside dev/localhost: ${url}`);
-  }
+  if (isHttps) return;
+  if (isDev && (isLocalhost || isPrivateLan)) return;
+  throw new Error(
+    `Refusing to use non-HTTPS API URL in production: ${url}. Configure an explicit https:// endpoint.`
+  );
 }
 
-assertSafeUrl(RAW_BASE_URL);
-
 export const http = axios.create({
-  baseURL: RAW_BASE_URL,
+  baseURL: resolveApiBaseUrl({ loud: false }),
   timeout: 10_000,
+});
+
+// Fail loudly in dev when no API address is configured, instead of
+// letting requests go out relative and fail with a bare "Network Error".
+http.interceptors.request.use((config) => {
+  const base = config.baseURL || http.defaults.baseURL;
+  if (!base) {
+    throw new Error('EXPO_PUBLIC_API_URL is missing. Run npm run dev.');
+  }
+  return config;
 });
 
 // Auth wiring without a React import (avoids context cycles).

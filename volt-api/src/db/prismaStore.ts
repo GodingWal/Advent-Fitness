@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import type {
   AccessEvent,
   AccessProviderConnection,
@@ -6,6 +6,8 @@ import type {
   Gym,
   GymLocation,
   Membership,
+  Profile,
+  ProfilePatch,
   ProviderName,
   RefreshTokenRecord,
   User,
@@ -44,6 +46,7 @@ function toUser(r: {
   name: string;
   phone: string | null;
   status: User['status'];
+  emailVerified: boolean;
   createdAt: Date;
 }): User {
   return {
@@ -53,7 +56,38 @@ function toUser(r: {
     name: r.name,
     phone: r.phone,
     status: r.status,
+    emailVerified: r.emailVerified,
     createdAt: iso(r.createdAt),
+  };
+}
+
+function toProfile(r: {
+  id: string;
+  userId: string;
+  weeklyTargetH: number;
+  goal: string;
+  activities: string[];
+  homeGymId: string | null;
+  privacy: unknown;
+  units: string;
+  experience: string;
+  notifications: unknown;
+  onboardingCompleted: boolean;
+  updatedAt: Date;
+}): Profile {
+  return {
+    id: r.id,
+    userId: r.userId,
+    weeklyTargetH: r.weeklyTargetH,
+    goal: r.goal,
+    activities: r.activities,
+    homeGymId: r.homeGymId,
+    privacy: (r.privacy as Record<string, unknown>) ?? {},
+    units: r.units,
+    experience: r.experience,
+    notifications: (r.notifications as Record<string, unknown>) ?? {},
+    onboardingCompleted: r.onboardingCompleted,
+    updatedAt: iso(r.updatedAt),
   };
 }
 
@@ -194,11 +228,14 @@ class PrismaStore implements Store {
     await db.accessProviderConnection.deleteMany();
     await db.door.deleteMany();
     await db.membership.deleteMany();
+    await db.profile.deleteMany();
     await db.gymLocation.deleteMany();
     await db.gym.deleteMany();
     await db.user.deleteMany();
     refreshTokens.clear();
     seenKisiEventIds.clear();
+    const { resetAccountTokens } = await import('../auth/accountTokens');
+    resetAccountTokens();
   }
 
   async getUserById(id: string): Promise<User | undefined> {
@@ -223,9 +260,73 @@ class PrismaStore implements Store {
         name: u.name,
         phone: u.phone ?? null,
         status: u.status,
+        emailVerified: u.emailVerified ?? false,
         createdAt: new Date(u.createdAt),
       },
     });
+  }
+
+  async updateUser(id: string, patch: Partial<User>): Promise<User | undefined> {
+    const data: { passwordHash?: string; emailVerified?: boolean; name?: string; phone?: string | null; status?: User['status'] } = {};
+    if (patch.passwordHash !== undefined) data.passwordHash = patch.passwordHash;
+    if (patch.emailVerified !== undefined) data.emailVerified = patch.emailVerified;
+    if (patch.name !== undefined) data.name = patch.name;
+    if (patch.phone !== undefined) data.phone = patch.phone;
+    if (patch.status !== undefined) data.status = patch.status;
+    try {
+      const r = await this.db().user.update({ where: { id }, data });
+      return toUser(r);
+    } catch {
+      return undefined;
+    }
+  }
+
+  async revokeAllRefreshForUser(userId: string): Promise<void> {
+    for (const rec of refreshTokens.values()) {
+      if (rec.userId === userId) rec.revoked = true;
+    }
+  }
+
+  async getProfileByUserId(userId: string): Promise<Profile | undefined> {
+    const r = await this.db().profile.findUnique({ where: { userId } });
+    return r ? toProfile(r) : undefined;
+  }
+
+  async createProfile(p: Profile): Promise<void> {
+    await this.db().profile.create({
+      data: {
+        id: p.id,
+        userId: p.userId,
+        weeklyTargetH: p.weeklyTargetH,
+        goal: p.goal,
+        activities: p.activities,
+        homeGymId: p.homeGymId,
+        privacy: p.privacy as Prisma.InputJsonValue,
+        units: p.units,
+        experience: p.experience,
+        notifications: p.notifications as Prisma.InputJsonValue,
+        onboardingCompleted: p.onboardingCompleted,
+      },
+    });
+  }
+
+  async updateProfile(userId: string, patch: ProfilePatch): Promise<Profile | undefined> {
+    const data: Prisma.ProfileUpdateInput = {};
+    if (patch.weeklyTargetH !== undefined) data.weeklyTargetH = patch.weeklyTargetH;
+    if (patch.goal !== undefined) data.goal = patch.goal;
+    if (patch.activities !== undefined) data.activities = patch.activities;
+    if (patch.homeGymId !== undefined) data.homeGymId = patch.homeGymId;
+    if (patch.privacy !== undefined) data.privacy = patch.privacy as Prisma.InputJsonValue;
+    if (patch.units !== undefined) data.units = patch.units;
+    if (patch.experience !== undefined) data.experience = patch.experience;
+    if (patch.notifications !== undefined) data.notifications = patch.notifications as Prisma.InputJsonValue;
+    if (patch.onboardingCompleted !== undefined) data.onboardingCompleted = patch.onboardingCompleted;
+    try {
+      const r = await this.db().profile.update({ where: { userId }, data });
+      return toProfile(r);
+    } catch {
+      return undefined;
+    }
   }
 
   async getGym(id: string): Promise<Gym | undefined> {

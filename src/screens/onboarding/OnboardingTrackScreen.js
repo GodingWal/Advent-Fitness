@@ -5,19 +5,50 @@ import HeaderBar from '../../components/HeaderBar';
 import { Caps, ProgressBar } from '../../components/VoltPrimitives';
 import PageDots from '../../components/PageDots';
 import PrimaryButton from '../../components/PrimaryButton';
+import { useAuth } from '../../state/AuthContext';
+import { friendlyAuthError } from '../../services/authErrors';
+import { strings } from '../../i18n/strings';
 import { colors, spacing, radius, typography } from '../../theme';
 
 // VOLT onboarding 02 — Goal picker. Caps "Profile / 02", h1 "Set a / target."
 // Goal card with 84px mono accent number + 5 toggle pills.
+// Persists { goal, weeklyTargetH, units } to PUT /v1/profile on continue.
 const HOURS = [4, 6, 8, 10, 12];
 
-export default function OnboardingTrackScreen({ navigation, route }) {
+export default function OnboardingTrackScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const { updateProfile } = useAuth();
   const [target, setTarget] = React.useState(10);
   const [mode, setMode] = React.useState('build');
-  const pendingSignup = route?.params?.pendingSignup || null;
-  const goNext = () => navigation.navigate('OnboardingFavorites', { pendingSignup });
-  const skip = () => navigation.navigate('OnboardingFavorites', { pendingSignup });
+  const [error, setError] = React.useState(null);
+  const [saving, setSaving] = React.useState(false);
+
+  const persist = async (overrides = {}) => {
+    setError(null);
+    setSaving(true);
+    try {
+      await updateProfile({
+        goal: overrides.mode ?? mode,
+        weeklyTargetH: overrides.target ?? target,
+        units: 'metric',
+      });
+      return true;
+    } catch (e) {
+      setError(friendlyAuthError(e, { fallback: strings.auth.genericError }));
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const goNext = async () => {
+    const ok = await persist();
+    if (ok) navigation.navigate('OnboardingFavorites');
+  };
+  const skip = async () => {
+    const ok = await persist();
+    if (ok) navigation.navigate('OnboardingFavorites');
+  };
 
   return (
     <View style={styles.container}>
@@ -93,11 +124,22 @@ export default function OnboardingTrackScreen({ navigation, route }) {
           <ProgressBar value={6.6 / target} />
         </View>
 
+        {error ? (
+          <Text style={styles.errorText} accessibilityLiveRegion="polite">
+            {error}
+          </Text>
+        ) : null}
+
         <View style={styles.spacer} />
 
         <PageDots count={3} active={1} />
         <View style={{ marginTop: spacing.l }}>
-          <PrimaryButton label="Next" trailingIcon="arrow-forward" onPress={goNext} />
+          <PrimaryButton
+            label="Next"
+            trailingIcon="arrow-forward"
+            onPress={goNext}
+            loading={saving}
+          />
         </View>
       </View>
     </View>
@@ -176,5 +218,6 @@ const styles = StyleSheet.create({
   modeLabel: { ...typography.body, fontSize: 15, fontWeight: '600', color: colors.text },
   modeSub: { ...typography.bodySmall, color: colors.textMute, marginTop: 4 },
   progressWrap: { marginTop: spacing.l },
+  errorText: { ...typography.mono, fontSize: 11, color: colors.accent2, marginTop: 8 },
   spacer: { flex: 1 },
 });

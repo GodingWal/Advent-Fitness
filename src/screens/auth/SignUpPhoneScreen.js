@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HeaderBar from '../../components/HeaderBar';
 import PrimaryButton from '../../components/PrimaryButton';
 import { Caps } from '../../components/VoltPrimitives';
+import { strings } from '../../i18n/strings';
 import { colors, spacing, typography } from '../../theme';
 
 export default function SignUpPhoneScreen({ navigation }) {
@@ -45,14 +46,12 @@ export default function SignUpPhoneScreen({ navigation }) {
           placeholder="(555) 555-5555"
           placeholderTextColor={colors.textDim}
           keyboardType="phone-pad"
+          editable={false}
         />
+        <Text style={styles.noticeText}>{strings.auth.phoneComingSoon}</Text>
 
         <View style={[styles.cta, { marginBottom: insets.bottom + spacing.l }]}>
-          <PrimaryButton
-            label="Send Code"
-            trailingIcon="arrow-forward"
-            onPress={() => navigation.navigate('OnboardingTrack')}
-          />
+          <PrimaryButton label={strings.auth.phoneComingSoon} onPress={() => {}} disabled />
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -75,9 +74,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
     paddingVertical: spacing.m,
-    color: colors.text,
+    color: colors.textDim,
     ...typography.body,
     fontSize: 15,
   },
+  noticeText: { ...typography.mono, fontSize: 11, color: colors.textMute, marginTop: 8 },
   cta: { marginTop: 'auto' },
 });
