@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum MembershipStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum GymStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum LocationStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum DoorStatus {
+  ONLINE
+  OFFLINE
+  UNKNOWN
+  DISABLED
+  MAINTENANCE
+}
+
+enum ProviderName {
+  MOCK
+  KISI
+}
+
+enum AccessEventResult {
+  GRANTED
+  DENIED
+  ERROR
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  passwordHash String
+  name         String
+  phone        String?
+  status       UserStatus   @default(ACTIVE)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  memberships  Membership[]
+  accessEvents AccessEvent[]
+}
+
+model Gym {
+  id          String                    @id @default(uuid())
+  name        String
+  status      GymStatus                 @default(ACTIVE)
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+  locations   GymLocation[]
+  memberships Membership[]
+  doors       Door[]
+  connections AccessProviderConnection[]
+  rules       AccessRule[]
+  events      AccessEvent[]
+}
+
+model GymLocation {
+  id          String                    @id @default(uuid())
+  gymId       String
+  gym         Gym                       @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  name        String
+  address     String
+  latitude    Float
+  longitude   Float
+  timezone    String                    @default("America/Chicago")
+  status      LocationStatus            @default(ACTIVE)
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+  doors       Door[]
+  connections AccessProviderConnection[]
+  rules       AccessRule[]
+}
+
+model Membership {
+  id             String           @id @default(uuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gymId          String
+  gym            Gym              @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  locationIds    String[]         @default([])
+  status         MembershipStatus @default(ACTIVE)
+  membershipType String           @default("STANDARD")
+  startsAt       DateTime
+  expiresAt      DateTime
+  accessLevel    String           @default("FULL")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([userId, gymId])
+}
+
+model Door {
+  id                 String       @id @default(uuid())
+  locationId         String
+  location           GymLocation  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  gymId              String
+  gym                Gym          @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  name               String
+  provider           ProviderName @default(MOCK)
+  providerDoorId     String       @unique
+  enabled            Boolean      @default(true)
+  requiresProximity  Boolean      @default(false)
+  radiusMeters       Int          @default(150)
+  status             DoorStatus   @default(ONLINE)
+  accessHoursStart   String?
+  accessHoursEnd     String?
+  accessHoursDays    Int[]        @default([])
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  rules              AccessRule[]
+  events             AccessEvent[]
+}
+
+model AccessProviderConnection {
+  id                   String      @id @default(uuid())
+  gymId                String?
+  gym                  Gym?        @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  locationId           String?
+  location             GymLocation? @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  provider             ProviderName
+  encryptedCredentials String
+  status               String      @default("ACTIVE")
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+}
+
+model AccessEvent {
+  id              String            @id @default(uuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doorId          String
+  door            Door              @relation(fields: [doorId], references: [id], onDelete: Cascade)
+  gymId           String
+  gym             Gym               @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  action          String            @default("UNLOCK")
+  result          AccessEventResult
+  reason          String?
+  provider        ProviderName      @default(MOCK)
+  providerEventId String?
+  deviceId        String?
+  ip              String?
+  latitude        Float?
+  longitude       Float?
+  createdAt       DateTime          @default(now())
+
+  @@index([userId, createdAt])
+  @@index([doorId, createdAt])
+}
+
+model AccessRule {
+  id                String      @id @default(uuid())
+  doorId            String
+  door              Door        @relation(fields: [doorId], references: [id], onDelete: Cascade)
+  gymId             String
+  gym               Gym         @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  locationId        String?
+  location          GymLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  membershipType    String?
+  accessLevel       String?
+  accessHoursStart  String?
+  accessHoursEnd    String?
+  accessHoursDays   Int[]       @default([])
+  requiresProximity Boolean     @default(false)
+  radiusMeters      Int         @default(150)
+  enabled           Boolean     @default(true)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}

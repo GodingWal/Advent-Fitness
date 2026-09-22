@@ -68,6 +68,19 @@ src/
   theme/            Colors, spacing, typography, shadows + 4 palettes
 ```
 
+## Backend (door access API)
+
+`advent-fitness-api/` is a Fastify + TypeScript service owning auth, memberships,
+door authorization, provider adapters (Mock, Kisi), webhooks, and audit events.
+The mobile app never talks to locks directly. See `advent-fitness-api/README.md`.
+
+Dev loop (two terminals):
+
+```bash
+npm start                                    # backend on :3000 (seed: member@volt.test / Volt12345!)
+EXPO_PUBLIC_API_URL=http://<lan-ip>:3000 npm run start   # mobile, point at backend
+```
+
 ## Deep linking
 
 URL scheme: `volt://`. See `src/navigation/linking.js` for the route map. Examples:

@@ -18,6 +18,7 @@ import AchievementsScreen from '../screens/profile/AchievementsScreen';
 import InboxScreen from '../screens/messages/InboxScreen';
 import ChatScreen from '../screens/messages/ChatScreen';
 import FitnessCenterPassScreen from '../screens/gym/FitnessCenterPassScreen';
+import GymAccessScreen from '../screens/gym/GymAccessScreen';
 import TrailDetailScreen from '../screens/map/TrailDetailScreen';
 import MeetupsScreen from '../screens/meetups/MeetupsScreen';
 import MeetupDetailScreen from '../screens/meetups/MeetupDetailScreen';
@@ -66,6 +67,7 @@ function AppStack() {
       <Stack.Screen name="Inbox" component={InboxScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen name="FitnessCenterPass" component={FitnessCenterPassScreen} />
+      <Stack.Screen name="GymAccess" component={GymAccessScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TrailDetail" component={TrailDetailScreen} />
       <Stack.Screen name="Meetups" component={MeetupsScreen} />
       <Stack.Screen name="MeetupDetail" component={MeetupDetailScreen} />

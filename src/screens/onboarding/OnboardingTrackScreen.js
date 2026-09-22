@@ -5,19 +5,19 @@ import HeaderBar from '../../components/HeaderBar';
 import { Caps, ProgressBar } from '../../components/VoltPrimitives';
 import PageDots from '../../components/PageDots';
 import PrimaryButton from '../../components/PrimaryButton';
-import { useAuth } from '../../state/AuthContext';
 import { colors, spacing, radius, typography } from '../../theme';
 
 // VOLT onboarding 02 — Goal picker. Caps "Profile / 02", h1 "Set a / target."
 // Goal card with 84px mono accent number + 5 toggle pills.
 const HOURS = [4, 6, 8, 10, 12];
 
-export default function OnboardingTrackScreen({ navigation }) {
+export default function OnboardingTrackScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const { signIn } = useAuth();
   const [target, setTarget] = React.useState(10);
   const [mode, setMode] = React.useState('build');
-  const skip = () => signIn({ email: 'guest@volt.app' });
+  const pendingSignup = route?.params?.pendingSignup || null;
+  const goNext = () => navigation.navigate('OnboardingFavorites', { pendingSignup });
+  const skip = () => navigation.navigate('OnboardingFavorites', { pendingSignup });
 
   return (
     <View style={styles.container}>
@@ -97,11 +97,7 @@ export default function OnboardingTrackScreen({ navigation }) {
 
         <PageDots count={3} active={1} />
         <View style={{ marginTop: spacing.l }}>
-          <PrimaryButton
-            label="Next"
-            trailingIcon="arrow-forward"
-            onPress={() => navigation.navigate('OnboardingFavorites')}
-          />
+          <PrimaryButton label="Next" trailingIcon="arrow-forward" onPress={goNext} />
         </View>
       </View>
     </View>

@@ -17,25 +17,34 @@ import { isValidEmail, isValidPassword } from '../../utils/validation';
 import { strings } from '../../i18n/strings';
 import { colors, spacing, typography } from '../../theme';
 
+function serverMessage(e) {
+  const msg = e?.response?.data?.message || e?.message;
+  if (typeof msg === 'string' && msg.trim()) return msg;
+  return strings.auth.signInFailed;
+}
+
 export default function LoginScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { signIn } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({ email: null, password: null });
+  const [errors, setErrors] = useState({ email: null, password: null, form: null });
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     const next = {
       email: isValidEmail(email) ? null : strings.auth.invalidEmail,
       password: isValidPassword(password) ? null : strings.auth.passwordTooShort,
+      form: null,
     };
     setErrors(next);
     if (next.email || next.password) return;
 
     setSubmitting(true);
     try {
-      await signIn({ email: email.trim() });
+      await login({ email: email.trim(), password });
+    } catch (e) {
+      setErrors((prev) => ({ ...prev, form: serverMessage(e) }));
     } finally {
       setSubmitting(false);
     }
@@ -66,7 +75,7 @@ export default function LoginScreen({ navigation }) {
           value={email}
           onChangeText={(t) => {
             setEmail(t);
-            if (errors.email) setErrors((e) => ({ ...e, email: null }));
+            if (errors.email || errors.form) setErrors((e) => ({ ...e, email: null, form: null }));
           }}
           placeholder={strings.auth.emailPlaceholder}
           placeholderTextColor={colors.textDim}
@@ -91,7 +100,8 @@ export default function LoginScreen({ navigation }) {
           value={password}
           onChangeText={(t) => {
             setPassword(t);
-            if (errors.password) setErrors((e) => ({ ...e, password: null }));
+            if (errors.password || errors.form)
+              setErrors((e) => ({ ...e, password: null, form: null }));
           }}
           placeholder={strings.auth.passwordPlaceholder}
           placeholderTextColor={colors.textDim}
@@ -105,6 +115,11 @@ export default function LoginScreen({ navigation }) {
         {errors.password ? (
           <Text style={styles.errorText} accessibilityLiveRegion="polite">
             {errors.password}
+          </Text>
+        ) : null}
+        {errors.form ? (
+          <Text style={styles.errorText} accessibilityLiveRegion="polite">
+            {errors.form}
           </Text>
         ) : null}
 

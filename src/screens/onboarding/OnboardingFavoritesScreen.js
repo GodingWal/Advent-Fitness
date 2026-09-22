@@ -8,6 +8,8 @@ import PageDots from '../../components/PageDots';
 import PrimaryButton from '../../components/PrimaryButton';
 import IconBadge from '../../components/IconBadge';
 import { useAuth } from '../../state/AuthContext';
+import { isValidEmail, isValidPassword } from '../../utils/validation';
+import { strings } from '../../i18n/strings';
 import { colors, spacing, radius, typography, shadows } from '../../theme';
 
 // VOLT onboarding 03 — Arena picker. 3×3 grid of square tiles. Selected =
@@ -15,7 +17,6 @@ import { colors, spacing, radius, typography, shadows } from '../../theme';
 const ARENAS = [
   { type: 'surfing', label: 'Surf', icon: 'wave' },
   { type: 'hiking', label: 'Hike', icon: 'mountain' },
-  { type: 'running', label: 'Run', icon: 'run' },
   { type: 'cycling', label: 'Cycle', icon: 'bike' },
   { type: 'yoga', label: 'Yoga', icon: 'yoga' },
   { type: 'meditation', label: 'Meditate', icon: 'meditate' },
@@ -24,11 +25,41 @@ const ARENAS = [
   { type: 'tennis', label: 'Tennis', icon: 'run' },
 ];
 
-export default function OnboardingFavoritesScreen({ navigation }) {
+function serverMessage(e) {
+  const msg = e?.response?.data?.message || e?.message;
+  if (typeof msg === 'string' && msg.trim()) return msg;
+  return strings.auth.signUpFailed;
+}
+
+export default function OnboardingFavoritesScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const { signIn } = useAuth();
+  const { register } = useAuth();
   const [picked, setPicked] = useState(new Set(['surfing', 'hiking']));
-  const finish = () => signIn({ email: 'guest@volt.app' });
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const pendingSignup = route?.params?.pendingSignup || null;
+
+  const finish = async () => {
+    if (!pendingSignup) {
+      navigation.navigate('Auth');
+      return;
+    }
+    const { email, password, name } = pendingSignup;
+    if (!isValidEmail(email) || !isValidPassword(password)) {
+      setError(strings.auth.signUpFailed);
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      await register({ email, password, name });
+      // RootNavigator switches to the app stack once isAuthenticated is true.
+    } catch (e) {
+      setError(serverMessage(e));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const togglePick = (type) => {
     setPicked((p) => {
@@ -42,12 +73,7 @@ export default function OnboardingFavoritesScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <HeaderBar
-        onBack={() => navigation.goBack()}
-        title="ONBOARDING"
-        rightIcon="close-outline"
-        onRight={finish}
-      />
+      <HeaderBar onBack={() => navigation.goBack()} title="ONBOARDING" />
 
       <View style={[styles.body, { paddingBottom: insets.bottom + spacing.xl }]}>
         <Caps size={10} color={colors.textMute}>
@@ -93,11 +119,22 @@ export default function OnboardingFavoritesScreen({ navigation }) {
           })}
         </View>
 
+        {error ? (
+          <Text style={styles.errorText} accessibilityLiveRegion="polite">
+            {error}
+          </Text>
+        ) : null}
+
         <View style={styles.spacer} />
 
         <PageDots count={3} active={2} />
         <View style={{ marginTop: spacing.l }}>
-          <PrimaryButton label="Enter VOLT" trailingIcon="arrow-forward" onPress={finish} />
+          <PrimaryButton
+            label="Enter VOLT"
+            trailingIcon="arrow-forward"
+            onPress={finish}
+            disabled={submitting}
+          />
         </View>
       </View>
     </View>
@@ -162,5 +199,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  errorText: { ...typography.mono, fontSize: 11, color: colors.accent2, marginTop: 8 },
   spacer: { flex: 1 },
 });

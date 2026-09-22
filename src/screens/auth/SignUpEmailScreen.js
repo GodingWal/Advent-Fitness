@@ -12,12 +12,28 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HeaderBar from '../../components/HeaderBar';
 import PrimaryButton from '../../components/PrimaryButton';
 import { Caps } from '../../components/VoltPrimitives';
+import { isValidEmail, isValidPassword } from '../../utils/validation';
+import { strings } from '../../i18n/strings';
 import { colors, spacing, typography } from '../../theme';
 
 export default function SignUpEmailScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({ email: null, password: null });
+
+  const handleContinue = () => {
+    const next = {
+      email: isValidEmail(email) ? null : strings.auth.invalidEmail,
+      password: isValidPassword(password) ? null : strings.auth.passwordTooShort,
+    };
+    setErrors(next);
+    if (next.email || next.password) return;
+
+    navigation.navigate('OnboardingTrack', {
+      pendingSignup: { email: email.trim(), password },
+    });
+  };
 
   return (
     <KeyboardAvoidingView
@@ -40,33 +56,42 @@ export default function SignUpEmailScreen({ navigation }) {
           Email
         </Caps>
         <TextInput
-          style={styles.input}
+          style={[styles.input, errors.email && styles.inputError]}
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(t) => {
+            setEmail(t);
+            if (errors.email) setErrors((e) => ({ ...e, email: null }));
+          }}
           placeholder="you@example.com"
           placeholderTextColor={colors.textDim}
           autoCapitalize="none"
           keyboardType="email-address"
+          accessibilityLabel="Email"
+          returnKeyType="next"
         />
+        {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
         <Caps size={9} color={colors.textMute} style={[styles.label, { marginTop: spacing.l }]}>
           Password
         </Caps>
         <TextInput
-          style={styles.input}
+          style={[styles.input, errors.password && styles.inputError]}
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(t) => {
+            setPassword(t);
+            if (errors.password) setErrors((e) => ({ ...e, password: null }));
+          }}
           placeholder="••••••••"
           placeholderTextColor={colors.textDim}
           secureTextEntry
+          accessibilityLabel="Password"
+          returnKeyType="go"
+          onSubmitEditing={handleContinue}
         />
+        {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
         <View style={[styles.cta, { marginBottom: insets.bottom + spacing.l }]}>
-          <PrimaryButton
-            label="Continue"
-            trailingIcon="arrow-forward"
-            onPress={() => navigation.navigate('OnboardingTrack')}
-          />
+          <PrimaryButton label="Continue" trailingIcon="arrow-forward" onPress={handleContinue} />
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -93,5 +118,7 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontSize: 15,
   },
+  inputError: { borderBottomColor: colors.accent2 },
+  errorText: { ...typography.mono, fontSize: 11, color: colors.accent2, marginTop: 4 },
   cta: { marginTop: 'auto' },
 });

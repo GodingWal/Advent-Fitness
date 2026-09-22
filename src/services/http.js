@@ -9,8 +9,12 @@ const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !=
 function assertSafeUrl(url) {
   if (!url) return;
   const isLocalhost = /^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/.test(url);
+  const isPrivateLan =
+    /^https?:\/\/(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)/.test(
+      url
+    );
   const isHttps = url.startsWith('https://');
-  if (!isHttps && !(isDev && isLocalhost)) {
+  if (!isHttps && !(isDev && (isLocalhost || isPrivateLan))) {
     throw new Error(`Refusing to use non-HTTPS API URL outside dev/localhost: ${url}`);
   }
 }

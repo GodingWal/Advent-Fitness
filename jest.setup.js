@@ -30,3 +30,28 @@ jest.mock('@react-native-async-storage/async-storage', () => {
     },
   };
 });
+
+jest.mock('expo-secure-store', () => {
+  const store = new Map();
+  return {
+    getItemAsync: jest.fn((k) => Promise.resolve(store.has(k) ? store.get(k) : null)),
+    setItemAsync: jest.fn((k, v) => {
+      store.set(k, v);
+      return Promise.resolve();
+    }),
+    deleteItemAsync: jest.fn((k) => {
+      store.delete(k);
+      return Promise.resolve();
+    }),
+    __store: store,
+  };
+});
+
+jest.mock('react-native-qrcode-svg', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  function MockQRCode() {
+    return React.createElement(View, { testID: 'qr-code-mock' });
+  }
+  return { __esModule: true, default: MockQRCode };
+});

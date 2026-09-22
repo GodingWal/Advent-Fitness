@@ -8,12 +8,12 @@ import { colors, spacing, radius, typography } from '../../theme';
 
 export default function SettingsScreen({ navigation }) {
   const { settings, updateSetting, updatePrivacyZone } = useApp();
-  const { signOut } = useAuth();
+  const { logout } = useAuth();
 
   const confirmSignOut = () => {
     Alert.alert('Sign out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
+      { text: 'Sign out', style: 'destructive', onPress: () => logout() },
     ]);
   };
 
