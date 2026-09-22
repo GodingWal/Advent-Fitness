@@ -11,7 +11,7 @@ async function main(): Promise<void> {
     }
   }
   await app.listen({ port: config.port, host: '0.0.0.0' });
-  console.log(`advent-fitness-api listening on http://localhost:${config.port}`);
+  console.log(`volt-api listening on http://localhost:${config.port}`);
 }
 
 void main().catch((err) => {

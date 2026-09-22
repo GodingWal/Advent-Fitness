@@ -1,8 +1,8 @@
 {
-  "name": "advent-fitness-api",
+  "name": "volt-api",
   "version": "1.0.0",
   "private": true,
-  "description": "Advent Fitness backend API (Fastify + Zod, in-memory store + Prisma schema as source of truth)",
+  "description": "Volt backend API (Fastify + Zod, in-memory store + Prisma schema as source of truth)",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

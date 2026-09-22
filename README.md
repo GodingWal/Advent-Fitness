@@ -70,9 +70,9 @@ src/
 
 ## Backend (door access API)
 
-`advent-fitness-api/` is a Fastify + TypeScript service owning auth, memberships,
+`volt-api/` is a Fastify + TypeScript service owning auth, memberships,
 door authorization, provider adapters (Mock, Kisi), webhooks, and audit events.
-The mobile app never talks to locks directly. See `advent-fitness-api/README.md`.
+The mobile app never talks to locks directly. See `volt-api/README.md`.
 
 Dev loop (two terminals):
 
