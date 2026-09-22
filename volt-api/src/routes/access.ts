@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { accessEvents, doors, listEventsForUser, memberships, newId, nowIso } from '../db/memoryStore';
+import { newId, nowIso } from '../db/memoryStore';
+import { getStore } from '../db/store';
 import { requireAuth } from '../auth/middleware';
 import { AuthorizeError, authorizeDoorAccess } from '../access/authorize';
 import { recordDoorAccessFailure } from '../access/rateLimit';
@@ -17,7 +18,7 @@ const qrTokenSchema = z.object({
   membershipId: z.string().min(1),
 });
 
-function writeAccessEvent(input: {
+async function writeAccessEvent(input: {
   userId: string;
   doorId: string;
   gymId: string;
@@ -28,7 +29,7 @@ function writeAccessEvent(input: {
   ip: string | null;
   latitude?: number | null;
   longitude?: number | null;
-}): AccessEvent {
+}): Promise<AccessEvent> {
   const id = newId('evt');
   const evt: AccessEvent = {
     id,
@@ -46,7 +47,7 @@ function writeAccessEvent(input: {
     longitude: input.longitude ?? null,
     createdAt: nowIso(),
   };
-  accessEvents.set(id, evt);
+  await getStore().createAccessEvent(evt);
   return evt;
 }
 
@@ -57,17 +58,21 @@ export async function registerAccessRoutes(app: FastifyInstance): Promise<void> 
       reply.code(401).send({ message: 'Unauthorized' });
       return;
     }
-    const events = listEventsForUser(user.id).map((e) => {
-      const door = doors.get(e.doorId);
-      return {
-        id: e.id,
-        doorId: e.doorId,
-        doorName: door ? door.name : 'Unknown',
-        result: e.result,
-        reason: e.reason,
-        createdAt: e.createdAt,
-      };
-    });
+    const store = getStore();
+    const rows = await store.listEventsForUser(user.id);
+    const events = await Promise.all(
+      rows.map(async (e) => {
+        const door = await store.getDoor(e.doorId);
+        return {
+          id: e.id,
+          doorId: e.doorId,
+          doorName: door ? door.name : 'Unknown',
+          result: e.result,
+          reason: e.reason,
+          createdAt: e.createdAt,
+        };
+      })
+    );
     reply.code(200).send({ events });
   });
 
@@ -83,7 +88,7 @@ export async function registerAccessRoutes(app: FastifyInstance): Promise<void> 
       reply.code(400).send({ message: 'Invalid request', issues: parsed.error.issues });
       return;
     }
-    const door = doors.get(doorId);
+    const door = await getStore().getDoor(doorId);
     if (!door) {
       reply.code(404).send({ message: 'Door not found' });
       return;
@@ -95,7 +100,7 @@ export async function registerAccessRoutes(app: FastifyInstance): Promise<void> 
         longitude: parsed.data.longitude,
         accuracyMeters: parsed.data.accuracyMeters,
       });
-      const evt = writeAccessEvent({
+      const evt = await writeAccessEvent({
         userId: user.id,
         doorId: door.id,
         gymId: door.gymId,
@@ -117,7 +122,7 @@ export async function registerAccessRoutes(app: FastifyInstance): Promise<void> 
       if (err instanceof AuthorizeError) {
         if (err.code !== 'DOOR_NOT_FOUND') {
           recordDoorAccessFailure(user.id);
-          const evt = writeAccessEvent({
+          const evt = await writeAccessEvent({
             userId: user.id,
             doorId: door.id,
             gymId: door.gymId,
@@ -143,7 +148,7 @@ export async function registerAccessRoutes(app: FastifyInstance): Promise<void> 
         return;
       }
       recordDoorAccessFailure(user.id);
-      writeAccessEvent({
+      await writeAccessEvent({
         userId: user.id,
         doorId: door.id,
         gymId: door.gymId,
@@ -170,7 +175,7 @@ export async function registerAccessRoutes(app: FastifyInstance): Promise<void> 
       reply.code(400).send({ message: 'Invalid request', issues: parsed.error.issues });
       return;
     }
-    const membership = memberships.get(parsed.data.membershipId);
+    const membership = await getStore().getMembership(parsed.data.membershipId);
     if (!membership || membership.userId !== user.id) {
       reply.code(404).send({ message: 'Membership not found' });
       return;

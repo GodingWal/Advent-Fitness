@@ -1,4 +1,4 @@
-import { doors, findMembershipForGym, gyms, locations, users } from '../db/memoryStore';
+import { getStore } from '../db/store';
 import { getAccessProvider } from './providers/ProviderFactory';
 import { KisiProviderError } from './providers/KisiProvider';
 import { MockProviderError } from './providers/MockProvider';
@@ -65,7 +65,8 @@ export async function authorizeDoorAccess(
   doorId: string,
   ctx: AuthorizeContext = {}
 ): Promise<AuthorizeSuccess> {
-  const user = users.get(userId);
+  const store = getStore();
+  const user = await store.getUserById(userId);
   if (!user || user.status !== 'ACTIVE') {
     if (user && user.status === 'SUSPENDED') {
       throw new AuthorizeError('MEMBERSHIP_SUSPENDED', 'Membership is suspended.');
@@ -73,7 +74,7 @@ export async function authorizeDoorAccess(
     throw new AuthorizeError('NO_MEMBERSHIP', 'No active membership found.');
   }
 
-  const door = doors.get(doorId);
+  const door = await store.getDoor(doorId);
   if (!door) {
     throw new AuthorizeError('DOOR_NOT_FOUND', 'Door not found.', 404);
   }
@@ -81,13 +82,13 @@ export async function authorizeDoorAccess(
     throw new AuthorizeError('DOOR_DISABLED', 'This door is currently disabled.');
   }
 
-  const gym = gyms.get(door.gymId);
-  const location = locations.get(door.locationId);
+  const gym = await store.getGym(door.gymId);
+  const location = await store.getLocation(door.locationId);
   if (!gym || gym.status !== 'ACTIVE' || !location || location.status !== 'ACTIVE') {
     throw new AuthorizeError('DOOR_DISABLED', 'This door is currently disabled.');
   }
 
-  const membership = findMembershipForGym(userId, door.gymId);
+  const membership = await store.findMembershipForGym(userId, door.gymId);
   if (!membership) {
     throw new AuthorizeError('NO_MEMBERSHIP', 'No active membership found.');
   }

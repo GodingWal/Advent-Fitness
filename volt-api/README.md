@@ -2,7 +2,7 @@
 
 Backend service for the Volt Expo app. The repo root stays the Expo mobile app; everything here lives under `volt-api/` and touches nothing outside it.
 
-Stack: Node.js + TypeScript + Fastify + Zod. No database server is required for local dev: a repository layer with an in-memory store + seed data runs out of the box. `prisma/schema.prisma` (Postgres) is the source-of-truth schema for real deployments. Prisma is intentionally not installed (engines cannot download in this environment).
+Stack: Node.js + TypeScript + Fastify + Zod + Prisma 5 (Postgres). No database server is required for local dev: when `DATABASE_URL` is unset the API runs on an in-memory store + seed data out of the box. `prisma/schema.prisma` (Postgres) is the source-of-truth schema for real deployments; checked-in SQL lives in `prisma/migrations/0001_init/migration.sql` (generated offline via `prisma migrate diff`, no DB needed).
 
 ## Run
 
@@ -28,7 +28,41 @@ Seed (dev only, on boot): user `member@volt.test` / `Volt12345!`, gym `Snap Fitn
 | `KISI_WEBHOOK_SECRET` | HMAC-SHA256 secret for `x-kisi-signature` | `dev-kisi-webhook-secret` |
 | `KISI_API_BASE_URL` | Kisi API base URL (server-side only) | `` (unset = unconfigured) |
 | `KISI_API_KEY` | Kisi API key (server-side only, never returned) | `` |
-| `DATABASE_URL` | Postgres URL for real Prisma deployments | — |
+| `GOOGLE_PLACES_API_KEY` | Google Places key for `GET /places/nearby` (server-side only, never echoed) | `` (unset → `503 PLACES_UNCONFIGURED`) |
+| `DATABASE_URL` | Postgres URL for real Prisma deployments | — (unset = in-memory store) |
+
+Production secrets: if `NODE_ENV=production` and any of `AUTH_JWT_SECRET` / `QR_SECRET` / `KISI_WEBHOOK_SECRET` still equals its dev default, the process throws on boot instead of serving. Set real values in production.
+
+## Places proxy (no `/v1` prefix)
+
+- `GET /places/nearby?category=&latitude=&longitude=&radius=` (radius defaults to `5000`) → raw JSON array of `{id,category,name,address,rating,coordinate:{latitude,longitude},photo,open}` — the same shape as the mobile app's direct-Google mapping (`src/services/places.js`). The mobile app prefers this proxy so the Google key stays off-device.
+- Query is validated with Zod (`category` string, numeric `latitude`/`longitude`, positive-int `radius`). Bad query → `400`.
+- Key is read ONLY from server env `GOOGLE_PLACES_API_KEY`; unset → `503 {success:false,code:"PLACES_UNCONFIGURED",message}`. The key is sent to Google in the upstream query string but is never echoed in any response (returned `photo` URLs carry no key).
+
+## Postgres (optional) — memory fallback by default
+
+With no `DATABASE_URL` set, all routes run against the existing in-memory store (`src/db/memoryStore.ts`); no services needed and the full test suite passes offline. When `DATABASE_URL` is set, routes use the Prisma-backed store instead: `src/db/store.ts` exports `getStore()`, which returns the memory or Prisma (`src/db/prismaStore.ts`) implementation behind the same async method surface; routes call `getStore()` and never touch Maps directly. Ephemeral data (refresh tokens, QR nonces, Kisi dedupe, rate limits) stays in process memory in both modes.
+
+Local Postgres:
+
+```bash
+cd volt-api
+docker compose up -d                                   # postgres:16, db volt / user volt / password volt, port 5432
+DATABASE_URL=postgresql://volt:volt@localhost:5432/volt npx prisma migrate deploy
+DATABASE_URL=postgresql://volt:volt@localhost:5432/volt npm start
+```
+
+`tests/prisma.integration.test.ts` runs only when `DATABASE_URL` is set (skipped otherwise) and exercises register → membership → unlock → history against the Prisma store.
+
+## E2E smoke
+
+`scripts/e2e.js` (plain node, global `fetch`, no deps) assumes the server is on `http://localhost:3000` (override with `E2E_BASE_URL`): login seed `member@volt.test` / `Volt12345!` → memberships → locations → doors → unlock front door (asserts `success:true`) → history (asserts newest `GRANTED`) → qr-token → qr-verify (`valid:true`); exits non-zero with a message on any failure.
+
+```bash
+cd volt-api
+npm run build && npm start        # terminal 1
+npm run e2e                       # terminal 2
+```
 
 Passwords: `node:crypto` scrypt. Refresh tokens: opaque 32-byte, stored as SHA-256, 30 d, rotated on use; reuse is rejected with 401.
 
@@ -52,6 +86,10 @@ Access (all Bearer):
 - `POST /v1/access/doors/:doorId/unlock {latitude?,longitude?,accuracyMeters?}` → `200 {success:true,eventId,door:{id,name},unlockedAt}` or `200 {success:false,code,message}` or `429 {success:false,code:"RATE_LIMITED",message}` or `401`. Deny codes: `MEMBERSHIP_INACTIVE, MEMBERSHIP_EXPIRED, MEMBERSHIP_SUSPENDED, NO_MEMBERSHIP, DOOR_DISABLED, DOOR_OFFLINE, OUTSIDE_ACCESS_HOURS, OUTSIDE_PROXIMITY, PROVIDER_ERROR`. Every attempt writes an `AccessEvent`, including failures.
 - `POST /v1/access/qr-token {membershipId}` → `200 {token,expiresAt}` (HS256 JWT, 60 s, single-use nonce); `GET /v1/access/qr-verify?token=` rejects replays with `{valid:false,code:"QR_REPLAY"}`
 - `POST /v1/webhooks/kisi`: HMAC-SHA256 of the raw body vs `x-kisi-signature`; `401` on bad signature; dedupe by `body.event_id` (repeat → `200 {duplicate:true}`); maps provider door → Volt door and stores an `AccessEvent`
+
+Places (no `/v1` prefix, no auth):
+
+- `GET /places/nearby?category=&latitude=&longitude=&radius=` → raw JSON array (see above); `503 {success:false,code:"PLACES_UNCONFIGURED"}` when unconfigured
 
 Authorization order in `authorizeDoorAccess(userId,doorId,ctx)`: user exists + active → door exists + enabled → gym/location active → membership for gym → status ACTIVE → not expired → location covered → access-hours/days → not suspended → rate limits (1/door/3 s per user, 10/min per user, 30 failed/hour per user → `RATE_LIMITED`) → proximity (server haversine vs location coords, default 150 m, per-door `radiusMeters`; client booleans never trusted) → provider unlock.
 

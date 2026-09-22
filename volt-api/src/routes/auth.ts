@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { users, usersByEmail, newId, nowIso } from '../db/memoryStore';
+import { newId, nowIso } from '../db/memoryStore';
+import { getStore } from '../db/store';
 import { hashPassword, verifyPassword } from '../auth/password';
 import { publicUser, requireAuth } from '../auth/middleware';
 import {
@@ -35,8 +36,9 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       reply.code(400).send({ message: 'Invalid request', issues: parsed.error.issues });
       return;
     }
-    const email = parsed.data.email.toLowerCase();
-    if (usersByEmail.has(email)) {
+    const store = getStore();
+    const existing = await store.getUserByEmail(parsed.data.email);
+    if (existing) {
       reply.code(409).send({ message: 'Email already registered' });
       return;
     }
@@ -51,10 +53,9 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       status: 'ACTIVE' as const,
       createdAt: nowIso(),
     };
-    users.set(id, user);
-    usersByEmail.set(email, id);
+    await store.createUser(user);
     const accessToken = signAccessToken(id);
-    const refresh = createRefreshToken(id);
+    const refresh = await createRefreshToken(id);
     reply.code(201).send({
       accessToken,
       refreshToken: refresh.token,
@@ -68,9 +69,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       reply.code(400).send({ message: 'Invalid request', issues: parsed.error.issues });
       return;
     }
-    const email = parsed.data.email.toLowerCase();
-    const id = usersByEmail.get(email);
-    const user = id ? users.get(id) : undefined;
+    const user = await getStore().getUserByEmail(parsed.data.email);
     if (!user) {
       reply.code(401).send({ message: 'Invalid credentials' });
       return;
@@ -81,7 +80,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       return;
     }
     const accessToken = signAccessToken(user.id);
-    const refresh = createRefreshToken(user.id);
+    const refresh = await createRefreshToken(user.id);
     reply.code(200).send({
       accessToken,
       refreshToken: refresh.token,
@@ -95,7 +94,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       reply.code(400).send({ message: 'Invalid request', issues: parsed.error.issues });
       return;
     }
-    const rotated = rotateRefreshToken(parsed.data.refreshToken);
+    const rotated = await rotateRefreshToken(parsed.data.refreshToken);
     if (!rotated) {
       reply.code(401).send({ message: 'Invalid refresh token' });
       return;
@@ -109,10 +108,10 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       reply.code(400).send({ message: 'Invalid request', issues: parsed.error.issues });
       return;
     }
-    if (isRefreshTokenKnown(parsed.data.refreshToken)) {
-      revokeRefreshToken(parsed.data.refreshToken);
+    if (await isRefreshTokenKnown(parsed.data.refreshToken)) {
+      await revokeRefreshToken(parsed.data.refreshToken);
     } else {
-      const found = lookupRefreshToken(parsed.data.refreshToken);
+      const found = await lookupRefreshToken(parsed.data.refreshToken);
       if (!found) {
         void 0;
       }

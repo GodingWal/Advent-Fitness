@@ -1,16 +1,5 @@
-import {
-  doors,
-  gyms,
-  locations,
-  memberships,
-  newId,
-  nowIso,
-  providerConnections,
-  resetStore,
-  seenKisiEventIds,
-  users,
-  usersByEmail,
-} from './memoryStore';
+import { newId, nowIso, resetStore } from './memoryStore';
+import { getStore, getStoreKind } from './store';
 import { hashPassword } from '../auth/password';
 import { resetRateLimits } from '../access/rateLimit';
 import { resetQrNonces } from '../access/qr';
@@ -23,16 +12,20 @@ export async function seed(): Promise<{
   sideDoorId: string;
   membershipId: string;
 }> {
-  resetStore();
+  const store = getStore();
+  await store.reset();
+  if (getStoreKind() === 'memory') {
+    // Keep legacy maps pristine too (tests import them directly).
+    resetStore();
+  }
   resetRateLimits();
   resetQrNonces();
-  seenKisiEventIds.clear();
 
   const gymId = newId('gym');
-  gyms.set(gymId, { id: gymId, name: 'Snap Fitness', status: 'ACTIVE', createdAt: nowIso() });
+  await store.createGym({ id: gymId, name: 'Snap Fitness', status: 'ACTIVE', createdAt: nowIso() });
 
   const locationId = newId('loc');
-  locations.set(locationId, {
+  await store.createLocation({
     id: locationId,
     gymId,
     name: 'Albert Lea, MN',
@@ -45,7 +38,7 @@ export async function seed(): Promise<{
   });
 
   const frontDoorId = newId('door');
-  doors.set(frontDoorId, {
+  await store.createDoor({
     id: frontDoorId,
     locationId,
     gymId,
@@ -61,7 +54,7 @@ export async function seed(): Promise<{
   });
 
   const sideDoorId = newId('door');
-  doors.set(sideDoorId, {
+  await store.createDoor({
     id: sideDoorId,
     locationId,
     gymId,
@@ -79,7 +72,7 @@ export async function seed(): Promise<{
   const passwordHash = await hashPassword('Volt12345!');
   const userId = newId('user');
   const email = 'member@volt.test';
-  users.set(userId, {
+  await store.createUser({
     id: userId,
     email,
     passwordHash,
@@ -88,12 +81,11 @@ export async function seed(): Promise<{
     status: 'ACTIVE',
     createdAt: nowIso(),
   });
-  usersByEmail.set(email.toLowerCase(), userId);
 
   const membershipId = newId('mem');
   const startsAt = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-  memberships.set(membershipId, {
+  await store.createMembership({
     id: membershipId,
     userId,
     gymId,
@@ -107,7 +99,7 @@ export async function seed(): Promise<{
   });
 
   const connId = newId('conn');
-  providerConnections.set(connId, {
+  await store.createProviderConnection({
     id: connId,
     gymId,
     locationId: null,

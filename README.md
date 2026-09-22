@@ -19,8 +19,9 @@ npm install
 npm run start          # Expo dev server
 npm run ios            # iOS simulator
 npm run android        # Android emulator
-npm run web            # Web preview
 ```
+
+iOS/Android only — web preview is not supported.
 
 ## Brand
 

@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { users } from '../db/memoryStore';
+import { getStore } from '../db/store';
 import type { User } from '../db/types';
 import { verifyAccessToken } from './tokens';
 
@@ -52,7 +52,7 @@ export async function requireAuth(req: FastifyRequest, reply: FastifyReply): Pro
     reply.code(401).send({ message: 'Unauthorized' });
     return;
   }
-  const user = users.get(decoded.sub);
+  const user = await getStore().getUserById(decoded.sub);
   if (!user) {
     reply.code(401).send({ message: 'Unauthorized' });
     return;

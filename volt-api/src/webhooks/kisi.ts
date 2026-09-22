@@ -1,13 +1,8 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { config } from '../config';
-import {
-  accessEvents,
-  findDoorByProviderDoorId,
-  newId,
-  nowIso,
-  seenKisiEventIds,
-} from '../db/memoryStore';
+import { newId, nowIso } from '../db/memoryStore';
+import { getStore } from '../db/store';
 
 function signaturesMatch(rawBody: string, provided: string, secret: string): boolean {
   const expectedHex = createHmac('sha256', secret).update(rawBody).digest('hex');
@@ -41,11 +36,12 @@ export async function registerKisiWebhook(app: FastifyInstance): Promise<void> {
       reply.code(400).send({ message: 'Missing event_id' });
       return;
     }
-    if (seenKisiEventIds.has(eventId)) {
+    const store = getStore();
+    if (await store.hasSeenKisiEvent(eventId)) {
       reply.code(200).send({ duplicate: true });
       return;
     }
-    seenKisiEventIds.add(eventId);
+    await store.addSeenKisiEvent(eventId);
 
     const providerDoorIdRaw =
       body.lock_id ?? body.door_id ?? body.provider_door_id ?? body.providerDoorId;
@@ -54,7 +50,7 @@ export async function registerKisiWebhook(app: FastifyInstance): Promise<void> {
         ? String(providerDoorIdRaw)
         : null;
 
-    const door = providerDoorId ? findDoorByProviderDoorId(providerDoorId) : undefined;
+    const door = providerDoorId ? await store.findDoorByProviderDoorId(providerDoorId) : undefined;
     if (!door) {
       reply.code(200).send({ received: true, mapped: false });
       return;
@@ -68,7 +64,7 @@ export async function registerKisiWebhook(app: FastifyInstance): Promise<void> {
     const userId = typeof actorRaw === 'string' ? actorRaw : 'unknown';
 
     const evtId = newId('evt');
-    accessEvents.set(evtId, {
+    await store.createAccessEvent({
       id: evtId,
       userId,
       doorId: door.id,
