@@ -12,12 +12,13 @@ const ITEMS = [
   { label: 'Stats', tab: 'Activity', icon: 'pulse-outline' },
   { label: 'Map', tab: 'Map', icon: 'map-outline' },
   { label: 'Discover', tab: 'Discover', icon: 'search-outline' },
-  { label: 'Profile', tab: 'Profile', icon: 'person-outline' },
 ];
 
 const STACK_ITEMS = [
+  { label: 'Profile', screen: 'Profile', icon: 'person-outline' },
   { label: 'Inbox', screen: 'Inbox', icon: 'file-tray-outline' },
   { label: 'Meetups', screen: 'Meetups', icon: 'people-outline' },
+  { label: 'Trainers', screen: 'Trainers', icon: 'barbell-outline' },
   { label: 'Achievements', screen: 'Achievements', icon: 'trophy-outline' },
   { label: 'Gym Pass', screen: 'FitnessCenterPass', icon: 'card-outline' },
   { label: 'Settings', screen: 'Settings', icon: 'settings-outline' },
@@ -45,7 +46,13 @@ export default function DrawerMenu(props) {
         <Logo size={22} />
       </View>
 
-      <View style={styles.profile}>
+      <TouchableOpacity
+        style={styles.profile}
+        onPress={() => goStack('Profile')}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel="Open my profile"
+      >
         <Image source={{ uri: mockUser.avatar }} style={styles.avatar} />
         <View style={{ marginLeft: spacing.m, flex: 1 }}>
           <Text style={styles.name}>{mockUser.name}</Text>
@@ -54,7 +61,7 @@ export default function DrawerMenu(props) {
         <View style={styles.levelBadge}>
           <Text style={styles.levelText}>L4</Text>
         </View>
-      </View>
+      </TouchableOpacity>
 
       <Divider style={{ marginVertical: spacing.l }} />
 

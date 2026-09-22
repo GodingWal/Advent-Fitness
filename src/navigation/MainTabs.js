@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HomeFeedScreen from '../screens/home/HomeFeedScreen';
 import ActivityListScreen from '../screens/activity/ActivityListScreen';
 import DiscoverScreen from '../screens/discover/DiscoverScreen';
-import ProfileScreen from '../screens/profile/ProfileScreen';
 import MapScreen from '../screens/map/MapScreen';
 import { colors, spacing, radius, typography, shadows } from '../theme';
 
@@ -17,12 +16,11 @@ const TABS = {
   Activity: { icon: 'pulse-outline', iconActive: 'pulse', label: 'STATS' },
   Map: { icon: 'map-outline', iconActive: 'map', label: 'MAP' },
   Discover: { icon: 'search-outline', iconActive: 'search', label: 'DISCOVER' },
-  Profile: { icon: 'person-outline', iconActive: 'person', label: 'ME' },
 };
 
-// VOLT BottomBar — 5-column grid `1fr 1fr 110px 1fr 1fr`. Active tab gets a
-// 24×2 lime bar at top. Center is the REC button — accent fill, mono UPPERCASE
-// label, sharp 4px radius.
+// VOLT BottomBar — 4 tabs + center REC (`1fr 1fr 96px 1fr 1fr`). Active tab
+// gets a 24×2 lime bar at top. Center is the REC button — accent fill, mono
+// UPPERCASE label, sharp 4px radius. Profile lives in the drawer.
 function CustomTabBar({ state, navigation }) {
   const insets = useSafeAreaInsets();
   const { routes, index: activeIndex } = state;
@@ -97,7 +95,6 @@ export default function MainTabs() {
       <Tab.Screen name="Activity" component={ActivityListScreen} />
       <Tab.Screen name="Map" component={MapScreen} />
       <Tab.Screen name="Discover" component={DiscoverScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
@@ -115,7 +112,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 48,
+    height: 52,
     position: 'relative',
   },
   activeBar: {
@@ -133,8 +130,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   recBtn: {
-    width: 110,
-    height: 48,
+    width: 96,
+    height: 52,
     marginHorizontal: spacing.s,
     backgroundColor: colors.accent,
     borderRadius: radius.m,

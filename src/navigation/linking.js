@@ -28,6 +28,8 @@ export const linking = {
       TrailDetail: 'trail/:id',
       Meetups: 'meetups',
       MeetupDetail: 'meetup/:id',
+      Trainers: 'trainers',
+      Profile: 'me',
       Settings: 'settings',
     },
   },

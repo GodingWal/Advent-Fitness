@@ -14,6 +14,7 @@ import ActivitySummaryScreen from '../screens/activity/ActivitySummaryScreen';
 import IndoorWorkoutScreen from '../screens/activity/IndoorWorkoutScreen';
 import RecommendedScreen from '../screens/discover/RecommendedScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import ProfileScreen from '../screens/profile/ProfileScreen';
 import AchievementsScreen from '../screens/profile/AchievementsScreen';
 import InboxScreen from '../screens/messages/InboxScreen';
 import ChatScreen from '../screens/messages/ChatScreen';
@@ -22,6 +23,7 @@ import GymAccessScreen from '../screens/gym/GymAccessScreen';
 import TrailDetailScreen from '../screens/map/TrailDetailScreen';
 import MeetupsScreen from '../screens/meetups/MeetupsScreen';
 import MeetupDetailScreen from '../screens/meetups/MeetupDetailScreen';
+import TrainersScreen from '../screens/trainers/TrainersScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import MainDrawer from './MainDrawer';
 import { useAuth } from '../state/AuthContext';
@@ -62,6 +64,7 @@ function AppStack() {
       <Stack.Screen name="IndoorWorkout" component={IndoorWorkoutScreen} />
 
       <Stack.Screen name="Recommended" component={RecommendedScreen} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="Achievements" component={AchievementsScreen} />
       <Stack.Screen name="Inbox" component={InboxScreen} />
@@ -71,6 +74,7 @@ function AppStack() {
       <Stack.Screen name="TrailDetail" component={TrailDetailScreen} />
       <Stack.Screen name="Meetups" component={MeetupsScreen} />
       <Stack.Screen name="MeetupDetail" component={MeetupDetailScreen} />
+      <Stack.Screen name="Trainers" component={TrainersScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
     </Stack.Navigator>
   );
