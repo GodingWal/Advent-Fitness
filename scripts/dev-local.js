@@ -4,8 +4,13 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const apiDir = path.join(root, 'volt-api');
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const npmCli = process.env.npm_execpath;
 const useTunnel = process.argv.includes('--tunnel');
+
+if (!npmCli) {
+  console.error('Run this launcher through npm: npm run dev:local');
+  process.exit(1);
+}
 
 function findLanIp() {
   const candidates = [];
@@ -27,7 +32,7 @@ function findLanIp() {
 }
 
 function runChecked(args, cwd) {
-  const result = spawnSync(npm, args, { cwd, stdio: 'inherit' });
+  const result = spawnSync(process.execPath, [npmCli, ...args], { cwd, stdio: 'inherit' });
   if (result.error) throw result.error;
   if (result.status !== 0) process.exit(result.status || 1);
 }
@@ -58,7 +63,7 @@ async function main() {
   if (!(await apiIsHealthy(localApiUrl))) {
     console.log('Building and starting Volt API...');
     runChecked(['run', 'build'], apiDir);
-    apiProcess = spawn(npm, ['start'], { cwd: apiDir, stdio: 'inherit' });
+    apiProcess = spawn(process.execPath, [npmCli, 'start'], { cwd: apiDir, stdio: 'inherit' });
     if (!(await waitForApi(localApiUrl))) {
       apiProcess.kill();
       throw new Error('Volt API did not become healthy on port 3000.');
@@ -70,11 +75,11 @@ async function main() {
   console.log(`Phone API: ${phoneApiUrl}`);
   console.log('Starting Expo. Scan the QR code with Expo Go.');
 
-  const expoArgs = ['expo', 'start', useTunnel ? '--tunnel' : '--lan', '--clear'];
-  const expo = spawn('npx', expoArgs, {
+  const expoCli = require.resolve('expo/bin/cli', { paths: [root] });
+  const expoArgs = [expoCli, 'start', useTunnel ? '--tunnel' : '--lan', '--clear'];
+  const expo = spawn(process.execPath, expoArgs, {
     cwd: root,
     stdio: 'inherit',
-    shell: process.platform === 'win32',
     env: { ...process.env, EXPO_PUBLIC_API_URL: phoneApiUrl },
   });
 
