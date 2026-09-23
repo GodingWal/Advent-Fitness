@@ -2,7 +2,7 @@
 
 Backend service for the Volt Expo app. The repo root stays the Expo mobile app; everything here lives under `volt-api/` and touches nothing outside it.
 
-Stack: Node.js + TypeScript + Fastify + Zod + Prisma 5 (Postgres). No database server is required for local dev: when `DATABASE_URL` is unset the API runs on an in-memory store + seed data out of the box. `prisma/schema.prisma` (Postgres) is the source-of-truth schema for real deployments; checked-in SQL lives in `prisma/migrations/0001_init/migration.sql` (generated offline via `prisma migrate diff`, no DB needed) plus `prisma/migrations/0002_profile/migration.sql` (`Profile` model + `User.emailVerified`, generated the same way; `0001` untouched).
+Stack: Node.js + TypeScript + Fastify + Zod + Prisma 5 (Postgres). No database server is required for local dev: when `DATABASE_URL` is unset the API runs on an in-memory store + seed data out of the box. `prisma/schema.prisma` (Postgres) is the source-of-truth schema for real deployments; checked-in SQL lives in `prisma/migrations/0001_init/migration.sql` (generated offline via `prisma migrate diff`, no DB needed) plus `prisma/migrations/0002_profile/migration.sql` (`Profile` model + `User.emailVerified`, generated the same way; `0001` untouched) plus `prisma/migrations/0003_social/migration.sql` (`Activity`, `Post`, `Reaction`, `Comment`, `Meetup`, `MeetupAttendee`, `Conversation`, `ConversationMember`, `ChatMessage`; hand-written to match the schema).
 
 ## Run
 
@@ -104,6 +104,21 @@ Places (no `/v1` prefix, no auth):
 - `GET /places/nearby?category=&latitude=&longitude=&radius=` → raw JSON array (see above); `503 {success:false,code:"PLACES_UNCONFIGURED"}` when unconfigured
 
 Authorization order in `authorizeDoorAccess(userId,doorId,ctx)`: user exists + active → door exists + enabled → gym/location active → membership for gym → status ACTIVE → not expired → location covered → access-hours/days → not suspended → rate limits (1/door/3 s per user, 10/min per user, 30 failed/hour per user → `RATE_LIMITED`) → proximity (server haversine vs location coords, default 150 m, per-door `radiusMeters`; client booleans never trusted) → provider unlock.
+
+Social + fitness (all Bearer, all authorized per-resource; `src/routes/social.ts` + `src/social/store.ts`):
+
+- `GET /v1/activities?type=&from=&to=&search=` → `{activities}` newest first, auth user only
+- `POST /v1/activities {type,title,startedAt,durationMin,distanceKm?,calories?,elevationM?,notes?}` → `201 {activity}` (pace derived server-side)
+- `GET /v1/activities/:id` → `{activity}` (owner only, else `404` — no cross-user leak)
+- `PUT /v1/activities/:id` (partial) → `{activity}`; `DELETE` → `{success:true}` (owner only)
+- `GET /v1/feed` → `{posts:[{id,userId,authorName,body,activityId,likeCount,commentCount,likedByMe,createdAt}]}` (latest 100)
+- `POST /v1/feed {body,activityId?}` → `201 {post}`
+- `POST /v1/feed/:id/reactions` → `{liked,likeCount}` (toggle)
+- `GET /v1/feed/:id/comments` → `{comments}`; `POST` → `201 {comment}`
+- `GET /v1/meetups?activity=&search=` → `{meetups:[{attendeeCount,joined,organizerName,...}]}`; `POST` → `201`; `GET /v1/meetups/:id` → `{meetup}`; `POST /:id/join|/leave` → `{joined,attendeeCount}`
+- `GET /v1/conversations` → `{conversations:[{peerName,lastMessage,unread,updatedAt}]}`; `POST {memberIds}` → `201 {conversation}`; `GET /:id/messages` → `{messages}` (members only); `POST /:id/messages {body}` → `201` (members only)
+
+Social persistence: with `DATABASE_URL` set the social store uses the Prisma models from `0003_social`; without it, an in-memory store (cleared by `resetSocial()`, wired into `store.reset()` so tests stay isolated). Messaging transport is polling (`GET messages`); WebSocket/SSE can replace the transport later behind the same routes.
 
 Providers (`src/access/providers/`): `MockProvider` scripted by `provider_door_id` (`mock-front-door` ok, `mock-offline-door` OFFLINE, `mock-reject-door` denied, `mock-timeout-door` timeout, `mock-ratelimit-door` rate-limit); `KisiProvider` uses `fetch` against `KISI_API_BASE_URL` with `KISI_API_KEY`, normalizes responses, throws `PROVIDER_UNCONFIGURED` when env is missing; `ProviderFactory.getAccessProvider(name)`.
 

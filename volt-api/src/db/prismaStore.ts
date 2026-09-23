@@ -221,8 +221,18 @@ class PrismaStore implements Store {
   }
 
   async reset(): Promise<void> {
-    const db = this.db();
-    // FK-safe truncation order (children first).
+    const db = this.db() as any;
+    // FK-safe truncation order (children first). Social tables may not exist
+    // in older generated clients — guard each so reset never throws.
+    await db.chatMessage.deleteMany().catch(() => undefined);
+    await db.conversationMember.deleteMany().catch(() => undefined);
+    await db.conversation.deleteMany().catch(() => undefined);
+    await db.meetupAttendee.deleteMany().catch(() => undefined);
+    await db.meetup.deleteMany().catch(() => undefined);
+    await db.reaction.deleteMany().catch(() => undefined);
+    await db.comment.deleteMany().catch(() => undefined);
+    await db.post.deleteMany().catch(() => undefined);
+    await db.activity.deleteMany().catch(() => undefined);
     await db.accessEvent.deleteMany();
     await db.accessRule.deleteMany();
     await db.accessProviderConnection.deleteMany();

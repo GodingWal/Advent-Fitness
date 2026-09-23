@@ -18,6 +18,8 @@ A React Native + Expo fitness tracking app with a dark-first, performance-grade 
 npm run setup          # clean, locked install for app + API
 npm run dev:local      # API + Expo LAN QR code (recommended)
 npm run dev:tunnel     # API + Expo tunnel QR code
+npm run dev:web        # API + customer website on http://localhost:3001
+npm run dev:all        # API + Expo + website together
 npm run start          # Expo dev server only
 npm run ios            # iOS simulator
 npm run android        # Android emulator
@@ -64,6 +66,11 @@ For native map keys, set them in `app.json` (`ios.config.googleMapsApiKey`, `and
 | `npm run format:check` | Verify formatting in CI |
 | `npm test` | Run Jest unit tests |
 | `npm run test:ci` | Jest with coverage, no watch |
+| `npm run dev:web` | Start API + customer website (`volt-web`) |
+| `npm run dev:all` | Start API + Expo + website together |
+| `npm run test:web` | Run volt-web unit tests |
+| `npm run build:web` | Production build of volt-web |
+| `npm run test:all` | Mobile + backend + web test suites |
 
 ## Project structure
 

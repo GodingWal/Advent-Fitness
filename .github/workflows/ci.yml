@@ -39,3 +39,73 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+
+  web:
+    name: Web typecheck, test & build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: volt-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: volt-web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  web-e2e:
+    name: Web Playwright smoke
+    runs-on: ubuntu-latest
+    needs: [web, backend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: volt-web/package-lock.json
+      - run: npm ci
+        working-directory: volt-api
+      - run: npm ci
+        working-directory: volt-web
+      - run: npx playwright install --with-deps chromium
+        working-directory: volt-web
+      - run: npm run build
+        working-directory: volt-api
+      - run: (npm start & echo $! > /tmp/api.pid)
+        working-directory: volt-api
+      - run: npm run build
+        working-directory: volt-web
+      - run: (PORT=3001 npm run start -- -p 3001 & echo $! > /tmp/web.pid)
+        working-directory: volt-web
+      - run: sleep 8 && curl -sf http://localhost:3000/health && curl -sf http://localhost:3001/
+      - run: npx playwright test --project=chromium
+        working-directory: volt-web
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3001
+      - run: kill $(cat /tmp/api.pid) $(cat /tmp/web.pid) || true
+        if: always()
+
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+
+  secret-scan:
+    name: Secret scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

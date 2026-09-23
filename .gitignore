@@ -35,5 +35,11 @@ yarn-error.*
 # coverage
 coverage/
 
+# volt-web (Next.js)
+volt-web/.next/
+volt-web/out/
+test-results/
+playwright-report/
+
 # typescript
 *.tsbuildinfo
