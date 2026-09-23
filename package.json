@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
+    "setup": "node scripts/setup.js",
+    "dev:local": "node scripts/dev-local.js",
+    "dev:tunnel": "node scripts/dev-local.js --tunnel",
     "start": "expo start",
     "dev": "node scripts/dev.js",
     "android": "expo start --android",
@@ -17,6 +20,7 @@
     "test:ci": "jest --ci --coverage --watchAll=false"
   },
   "dependencies": {
+    "@expo/config-plugins": "57.0.9",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.0.0",

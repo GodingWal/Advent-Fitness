@@ -15,11 +15,21 @@ A React Native + Expo fitness tracking app with a dark-first, performance-grade 
 ## Quick start
 
 ```bash
-npm install
-npm run start          # Expo dev server
+npm run setup          # clean, locked install for app + API
+npm run dev:local      # API + Expo LAN QR code (recommended)
+npm run dev:tunnel     # API + Expo tunnel QR code
+npm run start          # Expo dev server only
 npm run ios            # iOS simulator
 npm run android        # Android emulator
 ```
+
+`dev:local` detects the computer's private LAN address, starts the API when it
+is not already running, injects `EXPO_PUBLIC_API_URL`, and starts Expo with a QR
+code. This avoids manually copying an IP address into CMD or PowerShell.
+
+Do not run `npm audit fix --force` in this Expo project. It can replace the
+SDK-pinned dependency set with incompatible major versions. If dependencies
+are damaged, run `npm run setup` to restore the checked-in lockfiles.
 
 iOS/Android only — web preview is not supported.
 
