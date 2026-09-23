@@ -80,6 +80,8 @@ class MemoryStore implements Store {
     accessRules.clear();
     const { resetAccountTokens } = await import('../auth/accountTokens');
     resetAccountTokens();
+    const { resetSocial } = await import('../social/store');
+    resetSocial();
   }
 
   async getUserById(id: string): Promise<User | undefined> {

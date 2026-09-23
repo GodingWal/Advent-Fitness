@@ -64,6 +64,14 @@ model User {
   memberships   Membership[]
   accessEvents  AccessEvent[]
   profile       Profile?
+  activities    Activity[]
+  posts         Post[]
+  reactions     Reaction[]
+  comments      Comment[]
+  meetups       Meetup[]
+  meetupRSVPs   MeetupAttendee[]
+  convMembers   ConversationMember[]
+  chatMessages  ChatMessage[]
 }
 
 model Profile {
@@ -207,4 +215,119 @@ model AccessRule {
   enabled           Boolean     @default(true)
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
+}
+
+model Activity {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type             String
+  title            String
+  startedAt        DateTime
+  durationMin      Int
+  distanceKm       Float?
+  calories         Float?
+  elevationM       Float?
+  avgPaceSecPerKm  Float?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId, startedAt])
+}
+
+model Post {
+  id         String     @id @default(uuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body       String
+  activityId String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  reactions  Reaction[]
+  comments   Comment[]
+
+  @@index([userId, createdAt])
+}
+
+model Reaction {
+  id        String   @id @default(uuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([postId, createdAt])
+}
+
+model Meetup {
+  id           String           @id @default(uuid())
+  organizerId  String
+  organizer    User             @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  title        String
+  activityType String
+  location     String
+  startsAt     DateTime
+  capacity     Int              @default(20)
+  description  String           @default("")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  attendees    MeetupAttendee[]
+
+  @@index([startsAt])
+}
+
+model MeetupAttendee {
+  id        String   @id @default(uuid())
+  meetupId  String
+  meetup    Meetup   @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([meetupId, userId])
+}
+
+model Conversation {
+  id        String                @id @default(uuid())
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  members   ConversationMember[]
+  messages  ChatMessage[]
+}
+
+model ConversationMember {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+}
+
+model ChatMessage {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  body           String
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
 }

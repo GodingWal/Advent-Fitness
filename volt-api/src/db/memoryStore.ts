@@ -66,6 +66,7 @@ export function resetStore(): void {
   refreshTokens.clear();
   usedQrNonces.clear();
   seenKisiEventIds.clear();
+  // Social maps are owned by src/social/store.ts; cleared via resetSocial().
 }
 
 export function findMembershipForGym(userId: string, gymId: string): Membership | undefined {

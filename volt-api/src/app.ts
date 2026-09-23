@@ -4,6 +4,7 @@ import { registerAuthRoutes } from './routes/auth';
 import { registerGymRoutes } from './routes/gyms';
 import { registerAccessRoutes } from './routes/access';
 import { registerProfileRoutes } from './routes/profile';
+import { registerSocialRoutes } from './routes/social';
 import { registerKisiWebhook } from './webhooks/kisi';
 import { registerPlacesRoutes } from './routes/places';
 
@@ -34,6 +35,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registerGymRoutes(app);
   await registerAccessRoutes(app);
   await registerProfileRoutes(app);
+  await registerSocialRoutes(app);
   await registerKisiWebhook(app);
   await registerPlacesRoutes(app);
 
